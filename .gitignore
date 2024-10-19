@@ -1,0 +1,12 @@
+# IDE
+.idea/
+.vscode/
+# cache
+.cache
+.pytest_cache
+__pycache__/
+
+# output
+output/
+# ci
+tmp_html_content.html
