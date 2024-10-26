@@ -7,13 +7,13 @@ def generate_sql_for_dataset(url: str, columns: List[dict], table_name: str, req
     {{% if project_list()|length > 0 -%}}
     {{% for project in project_list() -%}}
     SELECT
-    SCHEMA_NAME
+    CONCAT('`', CATALOG_NAME, '`.`', SCHEMA_NAME, '`') AS SCHEMA_NAME
     FROM `{{{{ project | trim }}}}`.`region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
     {{% if not loop.last %}}UNION ALL{{% endif %}}
     {{% endfor %}}
     {{%- else %}}
     SELECT
-    SCHEMA_NAME
+    CONCAT('`', CATALOG_NAME, '`.`', SCHEMA_NAME, '`') AS SCHEMA_NAME
     FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
     {{%- endif %}}
     {{%- endset %}}
@@ -43,7 +43,7 @@ def generate_sql_for_dataset(url: str, columns: List[dict], table_name: str, req
     {{%- else %}}
     {{% for dataset in dataset_list -%}}
       SELECT {columns_str}
-      FROM `{{{{ dataset | trim }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
+      FROM {{{{ dataset | trim }}}}.`INFORMATION_SCHEMA`.`PARTITIONS`
     {{% if not loop.last %}}UNION ALL{{% endif %}}
     {{% endfor %}}
     {{%- endif -%}}

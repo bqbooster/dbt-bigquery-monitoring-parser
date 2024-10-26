@@ -9,16 +9,18 @@ def test_parse_required_role():
       html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    expected = 'To query the INFORMATION_SCHEMA.OBJECT_PRIVILEGES view, you need following\nIdentity and Access Management (IAM) permissions:\nbigquery.datasets.get for datasets.\nbigquery.tables.getIamPolicy for tables and views.\nFor more information about BigQuery permissions, see\nAccess control with IAM.'
-    assert result == expected
+    with open("tests/html_content_expected.sql", "r") as file:
+        expected = file.read()
+        assert result == expected
 
     # Test case: Required role is present (second case)
     with open("html_content_2.html", "r") as file:
       html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    expected = '\n\n    To get the permission that you need to query the INFORMATION_SCHEMA.JOBS view,\n\n    ask your administrator to grant you the\n\n\nBigQuery Resource Viewer  (roles/bigquery.resourceViewer) IAM role on your project.\n\n\n\n\nFor more information about granting roles, see Manage access.\n\n\n\n      This predefined role contains the\n       bigquery.jobs.listAll permission, which is\n        required to query the INFORMATION_SCHEMA.JOBS view.\n\n\n\n  \n    You might also be able to get\n      this permission\n    with custom roles or\n    other predefined roles.\n  For more information about BigQuery permissions, see\nAccess control with IAM.'
-    assert result == expected
+    with open("tests/html_content_2_expected.sql", "r") as file:
+        expected = file.read()
+        assert result == expected
 
     # Test case: Required role is not present
     html_content = """
@@ -103,12 +105,14 @@ def test_generate_sql_table():
     # Test generate_sql function
     columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
     result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "table")
-    expected = "\n      {# More details about base table in https://cloud.google.com/bigquery/docs/information-schema-jobs -#}\n      jobs.admin\n      WITH base AS (\n      {% if project_list()|length > 0 -%}\n          {% for project in project_list() -%}\n            SELECT field1, field2, field3\n            FROM `{{ project | trim }}`.`region-{{ var('bq_region') }}`.`INFORMATION_SCHEMA`.`jobs`\n          {% if not loop.last %}UNION ALL{% endif %}\n          {% endfor %}\n      {%- else %}\n          SELECT field1, field2, field3\n          FROM `region-{{ var('bq_region') }}`.`INFORMATION_SCHEMA`.`jobs`\n      {%- endif %}\n      )\n      SELECT\n      field1, field2, field3,\n      FROM\n      base\n      "
-    assert result == expected
+    with open("tests/test_generate_sql_table_expected.sql", "r") as file:
+        expected = file.read()
+        assert result == expected
 
 def test_generate_sql_dataset():
     # Test generate_sql function
     columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
     result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "dataset")
-    expected = '\n    {# More details about base table in https://cloud.google.com/bigquery/docs/information-schema-jobs -#}\n    jobs.admin\n    \n    {% set preflight_sql -%}\n    {% if project_list()|length > 0 -%}\n    {% for project in project_list() -%}\n    SELECT\n    SCHEMA_NAME\n    FROM `{{ project | trim }}`.`region-{{ var(\'bq_region\') }}`.`INFORMATION_SCHEMA`.`SCHEMATA`\n    {% if not loop.last %}UNION ALL{% endif %}\n    {% endfor %}\n    {%- else %}\n    SELECT\n    SCHEMA_NAME\n    FROM `region-{{ var(\'bq_region\') }}`.`INFORMATION_SCHEMA`.`SCHEMATA`\n    {%- endif %}\n    {%- endset %}\n    {% set results = run_query(preflight_sql) %}\n    {% set dataset_list = results | map(attribute=\'SCHEMA_NAME\') | list %}\n    {%- if dataset_list | length == 0 -%}\n    {{ log("No datasets found in the project list", info=True) }}\n    {%- endif -%}\n    \n    WITH base AS (\n    {%- if dataset_list | length == 0 -%}\n      SELECT CAST(NULL AS STRING) AS field1, CAST(NULL AS INTEGER) AS field2, CAST(NULL AS STRING) AS field3\n      LIMIT 0\n    {%- else %}\n    {% for dataset in dataset_list -%}\n      SELECT field1, field2, field3\n      FROM `{{ dataset | trim }}`.`INFORMATION_SCHEMA`.`jobs`\n    {% if not loop.last %}UNION ALL{% endif %}\n    {% endfor %}\n    {%- endif -%}\n    )\n    SELECT\n    field1, field2, field3,\n    FROM\n    base\n    '
-    assert result == expected
+    with open("tests/test_generate_sql_dataset_expected.sql", "r") as file:
+        expected = file.read()
+        assert result == expected

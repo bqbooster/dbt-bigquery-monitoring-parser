@@ -19,3 +19,11 @@ run:
 test:
 	pytest test_documentation_parser.py
 
+# interprete line breaks to appropriate formatting
+format_special:
+	# replace \n with newline
+	sed 's/\\n/\n/g' temp.txt > temp_fmt.txt.tmp && mv temp_fmt.txt.tmp temp_fmt.txt
+	# replace escaped quotes with quotes
+	sed "s/\\\'/\'/g" temp_fmt.txt > temp_fmt.txt.tmp && mv temp_fmt.txt.tmp temp_fmt.txt
+	# replace escaped single quotes with single quotes
+	sed 's/\\\"/\"/g' temp_fmt.txt > temp_fmt.txt.tmp && mv temp_fmt.txt.tmp temp_fmt.txt
