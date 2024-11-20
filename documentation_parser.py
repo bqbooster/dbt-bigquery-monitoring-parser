@@ -58,6 +58,9 @@ def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
     # Extract all columns that are structures (as containing ".") and remove them from the columns list
     struct_columns = [column for column in input_columns if "." in column["name"]]
 
+    # Sort the struct columns by name
+    struct_columns = sorted(struct_columns, key=lambda x: x["name"])
+
     # Remove the struct columns from the columns list
     columns = [column for column in columns if column not in struct_columns]
 

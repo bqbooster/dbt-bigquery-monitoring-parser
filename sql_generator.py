@@ -68,11 +68,14 @@ def generate_sql_for_table(url: str, columns: List[dict], table_name: str, requi
       {required_role_str}
       WITH base AS (
       {{% if project_list()|length > 0 -%}}
+          SELECT {columns_str}
+          FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
+          WHERE project_id IN (
           {{% for project in project_list() -%}}
-            SELECT {columns_str}
-            FROM `{{{{ project | trim }}}}`.`region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
-          {{% if not loop.last %}}UNION ALL{{% endif %}}
+          '{{{{ project | trim }}}}'
+          {{% if not loop.last %}},{{% endif %}}
           {{% endfor %}}
+          )
       {{%- else %}}
           SELECT {columns_str}
           FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`

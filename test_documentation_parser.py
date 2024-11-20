@@ -60,6 +60,7 @@ def test_update_column_list():
     columns = [
         {"name": "column1", "type": "STRING", "description": "Column 1"},
         {"name": "column2", "type": "INTEGER", "description": "Column 2"},
+        {"name": "column4.subcolumn1", "type": "STRING", "description": "Subcolumn 1 of Column 4"},
         {"name": "column3.subcolumn1", "type": "STRING", "description": "Subcolumn 1 of Column 3"},
         {"name": "column3.subcolumn2", "type": "INTEGER", "description": "Subcolumn 2 of Column 3"},
     ]
@@ -68,6 +69,7 @@ def test_update_column_list():
     expected_columns = [
         {"name": "column1", "type": "STRING", "description": "Column 1"},
         {'name': 'column3', 'type': 'RECORD', 'description': 'column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3'},
+        {'name': 'column4', 'type': 'RECORD', 'description': 'column4.subcolumn1 : Subcolumn 1 of Column 4'},
     ]
     assert result == expected_columns
 
