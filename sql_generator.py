@@ -1,3 +1,4 @@
+import textwrap
 from typing import List
 
 def generate_sql_for_dataset(url: str, columns: List[dict], table_name: str, required_role_str: str):
@@ -57,60 +58,38 @@ def generate_sql_for_dataset(url: str, columns: List[dict], table_name: str, req
     return sql
 
 def generate_sql_for_table(url: str, columns: List[dict], table_name: str, required_role_str: str, has_project_id_scope: bool):
-    if has_project_id_scope:
-        return generate_sql_for_table_with_project_id(url, columns, table_name, required_role_str)
-    else:
-        return generate_sql_for_table_without_project_id(url, columns, table_name, required_role_str)
-    
-def generate_sql_for_table_with_project_id(url: str, columns: List[dict], table_name: str, required_role_str: str):
+  # Prepare the column names as a comma-separated string
+  column_names = [column["name"].lower() for column in columns]
+  columns_str = ", ".join(column_names)
 
-    # Prepare the column names as a comma-separated string
-    column_names = [column["name"].lower() for column in columns]
-    columns_str = ", ".join(column_names)
+  # Build the base query
+  base_query = textwrap.dedent(f"""SELECT {columns_str}
+FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
 
-    # Combine everything into the final SQL string
-    sql = f"""
-      {{# More details about base table in {url} -#}}
-      {required_role_str}
-      WITH base AS (
-      {{% if project_list()|length > 0 -%}}
-          {{% for project in project_list() -%}}
-            SELECT {columns_str}
-            FROM `{{{{ project | trim }}}}`.`region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
-          {{% if not loop.last %}}UNION ALL{{% endif %}}
-          {{% endfor %}}
-      {{%- else %}}
-          SELECT {columns_str}
-          FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
-      {{%- endif %}}
-      )
-      SELECT
-      {columns_str},
-      FROM
-      base
-      """
-    return sql
+  # Add project-scoped query if needed
+  if has_project_id_scope:
+    base_query = textwrap.dedent(f"""{{% if project_list()|length > 0 -%}}
+  {{% for project in project_list() -%}}
+  SELECT {columns_str}
+  FROM `{{{{ project | trim }}}}`.`region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
+  {{% if not loop.last %}}UNION ALL{{% endif %}}
+  {{% endfor %}}
+{{%- else %}}
+  {base_query}
+{{%- endif %}}""")
 
-def generate_sql_for_table_without_project_id(url: str, columns: List[dict], table_name: str, required_role_str: str):
-
-    # Prepare the column names as a comma-separated string
-    column_names = [column["name"].lower() for column in columns]
-    columns_str = ", ".join(column_names)
-
-    # Combine everything into the final SQL string
-    sql = f"""
-      {{# More details about base table in {url} -#}}
-      {required_role_str}
-      WITH base AS (
-        SELECT {columns_str}
-        FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
-      )
-      SELECT
-      {columns_str},
-      FROM
-      base
-      """
-    return sql
+  # Combine everything into the final SQL string
+  sql = textwrap.dedent(f"""{{# More details about base table in {url} -#}}
+{required_role_str}
+WITH base AS (
+  {base_query}
+)
+SELECT
+{columns_str},
+FROM
+base
+""")
+  return sql
 
 
 def generate_sql(url: str, columns: List[dict], table_name: str, required_role_str: str, type: str, has_project_id_scope: bool):

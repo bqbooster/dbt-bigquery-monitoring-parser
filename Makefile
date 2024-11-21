@@ -19,6 +19,10 @@ run:
 test:
 	pytest test_documentation_parser.py
 
+paste_buffer:
+	# copy the contents of the buffer to a file
+	pbpaste > temp.txt
+	
 # interprete line breaks to appropriate formatting
 format_special:
 	# replace \n with newline

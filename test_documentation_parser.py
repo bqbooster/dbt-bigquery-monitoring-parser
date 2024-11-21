@@ -130,6 +130,14 @@ def test_generate_sql_table():
         expected = file.read()
         assert result == expected
 
+def test_generate_sql_table_no_project_id():
+    # Test generate_sql function
+    columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
+    result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "table", has_project_id_scope= False)
+    with open("tests/test_generate_sql_table_no_project_id_expected.sql", "r") as file:
+        expected = file.read()
+        assert result == expected
+
 def test_generate_sql_dataset():
     # Test generate_sql function
     columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
