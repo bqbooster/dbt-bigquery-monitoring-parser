@@ -1,6 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
-from documentation_parser import parse_required_role, parse_table_name, update_column_list
+from documentation_parser import parse_has_project_id_scope, parse_required_role, parse_table_name, update_column_list
 from sql_generator import generate_sql
 
 def test_parse_required_role():
@@ -55,6 +55,25 @@ def test_parse_table_name():
   assert result is None
 
 
+def test_parse_has_project_id():
+    # Test case: PROJECT_ID is present
+    html_content = """
+    <p>Optional: <code translate="no" dir="ltr"><var translate="no">PROJECT_ID</var></code>: the ID of your
+    Google Cloud project. If not specified, the default project is used.
+
+    </p>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    assert parse_has_project_id_scope(soup) is True
+
+    # Test case: PROJECT_ID is not present
+    html_content = """
+    <ul><li><code translate="no" dir="ltr"><var translate="no">REGION</var></code>: any <a href="/bigquery/docs/locations">dataset region name</a>. For example, <code translate="no" dir="ltr">US</code>, or <code translate="no" dir="ltr">us-west2</code>.</li></ul>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    assert parse_has_project_id_scope(soup) is False
+
+
 def test_update_column_list():
     # Test case: Columns with exclude_columns
     columns = [
@@ -106,7 +125,7 @@ def test_update_column_list():
 def test_generate_sql_table():
     # Test generate_sql function
     columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
-    result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "table")
+    result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "table", has_project_id_scope= True)
     with open("tests/test_generate_sql_table_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
@@ -114,7 +133,7 @@ def test_generate_sql_table():
 def test_generate_sql_dataset():
     # Test generate_sql function
     columns = [{"name": "field1", "type": "STRING", "description": "Field 1"}, {"name": "field2", "type": "INTEGER", "description": "Field 2"}, {"name": "field3", "type": "STRING", "description": "Field 3"}]
-    result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "dataset")
+    result = generate_sql("https://cloud.google.com/bigquery/docs/information-schema-jobs", columns, "jobs", "jobs.admin", "dataset", has_project_id_scope= True)
     with open("tests/test_generate_sql_dataset_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected

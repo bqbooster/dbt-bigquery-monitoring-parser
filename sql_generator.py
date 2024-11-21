@@ -56,7 +56,13 @@ def generate_sql_for_dataset(url: str, columns: List[dict], table_name: str, req
 
     return sql
 
-def generate_sql_for_table(url: str, columns: List[dict], table_name: str, required_role_str: str):
+def generate_sql_for_table(url: str, columns: List[dict], table_name: str, required_role_str: str, has_project_id_scope: bool):
+    if has_project_id_scope:
+        return generate_sql_for_table_with_project_id(url, columns, table_name, required_role_str)
+    else:
+        return generate_sql_for_table_without_project_id(url, columns, table_name, required_role_str)
+    
+def generate_sql_for_table_with_project_id(url: str, columns: List[dict], table_name: str, required_role_str: str):
 
     # Prepare the column names as a comma-separated string
     column_names = [column["name"].lower() for column in columns]
@@ -68,14 +74,11 @@ def generate_sql_for_table(url: str, columns: List[dict], table_name: str, requi
       {required_role_str}
       WITH base AS (
       {{% if project_list()|length > 0 -%}}
-          SELECT {columns_str}
-          FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
-          WHERE project_id IN (
           {{% for project in project_list() -%}}
-          '{{{{ project | trim }}}}'
-          {{% if not loop.last %}},{{% endif %}}
+            SELECT {columns_str}
+            FROM `{{{{ project | trim }}}}`.`region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
+          {{% if not loop.last %}}UNION ALL{{% endif %}}
           {{% endfor %}}
-          )
       {{%- else %}}
           SELECT {columns_str}
           FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
@@ -88,10 +91,31 @@ def generate_sql_for_table(url: str, columns: List[dict], table_name: str, requi
       """
     return sql
 
+def generate_sql_for_table_without_project_id(url: str, columns: List[dict], table_name: str, required_role_str: str):
 
-def generate_sql(url: str, columns: List[dict], table_name: str, required_role_str: str, type: str):
+    # Prepare the column names as a comma-separated string
+    column_names = [column["name"].lower() for column in columns]
+    columns_str = ", ".join(column_names)
+
+    # Combine everything into the final SQL string
+    sql = f"""
+      {{# More details about base table in {url} -#}}
+      {required_role_str}
+      WITH base AS (
+        SELECT {columns_str}
+        FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`
+      )
+      SELECT
+      {columns_str},
+      FROM
+      base
+      """
+    return sql
+
+
+def generate_sql(url: str, columns: List[dict], table_name: str, required_role_str: str, type: str, has_project_id_scope: bool):
     if type == "table":
-        return generate_sql_for_table(url, columns, table_name, required_role_str)
+        return generate_sql_for_table(url, columns, table_name, required_role_str, has_project_id_scope)
     elif type == "dataset":
         return generate_sql_for_dataset(url, columns, table_name, required_role_str)
     else:
