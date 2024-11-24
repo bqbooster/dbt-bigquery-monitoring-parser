@@ -56,6 +56,10 @@ pages_to_process = {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-schemata-replicas",
     },
+    "schemata_replicas_by_failover_reservation": {
+        "dir": "datasets",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-schemata-replicas-by-failover-reservation",
+    },
     # Jobs
     "jobs": {
         "dir": "jobs",

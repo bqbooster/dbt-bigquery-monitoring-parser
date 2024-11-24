@@ -27,6 +27,18 @@ def parse_table_name(soup):
     return table_name
 
 
+# check if the page contains `Optional: PROJECT_ID: the ID of your Google Cloud project. If not specified, the default project is used.`
+def parse_has_project_id_scope(soup):
+    has_project_id = False
+    for p_tag in soup.find_all("p"):
+        if (
+            "Google Cloud project. If not specified, the default project is used."
+            in p_tag.text
+        ):
+            has_project_id = True
+            break
+    return has_project_id
+
 def parse_required_role(soup):
     required_role = None
     for h2_tag in soup.find_all("h2"):
@@ -65,6 +77,9 @@ def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
     struct_column_names = set(
         [column["name"].split(".")[0] for column in struct_columns]
     )
+
+    # Sort the struct columns by name
+    struct_column_names = sorted(struct_column_names)
 
     # Create a new column for each struct column and concatenate the description of its children columns
     for struct_column_name in struct_column_names:
@@ -116,6 +131,8 @@ def generate_files(
 
     # Extract the required role from following HTML snippet
     required_role = parse_required_role(soup)
+
+    has_project_id_scope = parse_has_project_id_scope(soup)
 
     # Extract the table with column information
     table = soup.find("table", {"class": None})
@@ -183,7 +200,7 @@ def generate_files(
 
     # Create the SQL file
     with open(filename_sql, "w") as f:
-        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type)
+        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope)
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
