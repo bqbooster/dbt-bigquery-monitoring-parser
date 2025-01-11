@@ -27,6 +27,7 @@ def parse_table_name(soup):
     return table_name
 
 
+
 # check if the page contains `Optional: PROJECT_ID: the ID of your Google Cloud project. If not specified, the default project is used.`
 def parse_has_project_id_scope(soup):
     has_project_id = False
@@ -58,6 +59,14 @@ def parse_required_role(soup):
             break
     return required_role
 
+def extract_partitioning_key(soup):
+    partitioning_key = None
+    for p_tag in soup.find_all("p"):
+        match = re.search(r'partitioned by the <code[^>]*>([^<]+)</code>', str(p_tag))
+        if match:
+            partitioning_key = match.group(1)
+            break
+    return partitioning_key
 
 def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
     # Remove the columns that are in the exclude_columns list
@@ -133,6 +142,7 @@ def generate_files(
     required_role = parse_required_role(soup)
 
     has_project_id_scope = parse_has_project_id_scope(soup)
+    partitioning_key = extract_partitioning_key(soup)
 
     # Extract the table with column information
     table = soup.find("table", {"class": None})
@@ -200,7 +210,7 @@ def generate_files(
 
     # Create the SQL file
     with open(filename_sql, "w") as f:
-        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope)
+        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key)
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
