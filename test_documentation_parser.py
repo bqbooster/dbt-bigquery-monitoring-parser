@@ -236,25 +236,66 @@ def test_generate_sql_dataset():
 
 
 def test_extract_partitioning_key():
-    # Test case: Partitioning key is present
+    # Test case: Partitioning key and clustering in paragraph format
     html_content = """
     <p>The underlying data is partitioned by the <code translate="no" dir="ltr">creation_time</code> column and clustered
-    by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>. The <code translate="no" dir="ltr">query_info</code> column contains
-    additional information about your query jobs.</p>
+    by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</p>
     """
     soup = BeautifulSoup(html_content, "html.parser")
-    result = extract_partitioning_key(soup)
-    expected = "creation_time"
-    assert result == expected
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key == "creation_time"
+    assert clustering_columns == ["project_id", "user_email"]
 
-    # Test case: Partitioning key is not present
+    # Test case: Partitioning key and clustering in aside note format
     html_content = """
-    <p>The underlying data is clustered by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>. The <code translate="no" dir="ltr">query_info</code> column contains
-    additional information about your query jobs.</p>
+    <aside class="note"><strong>Note:</strong><span> The underlying data is partitioned by the <code translate="no" dir="ltr">job_creation_time</code> column and
+    clustered by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</span></aside>
     """
     soup = BeautifulSoup(html_content, "html.parser")
-    result = extract_partitioning_key(soup)
-    assert result is None
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key == "job_creation_time"
+    assert clustering_columns == ["project_id", "user_email"]
+
+    # Test case: Only partitioning key, no clustering
+    html_content = """
+    <p>The underlying data is partitioned by the <code translate="no" dir="ltr">creation_time</code> column.</p>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key == "creation_time"
+    assert clustering_columns == []
+
+    # Test case: Only clustering, no partitioning
+    html_content = """
+    <p>The underlying data is clustered by <code translate="no" dir="ltr">project_id</code>.</p>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key is None
+    assert clustering_columns == ["project_id"]
+
+    # Test case: No partitioning or clustering
+    html_content = "<p>Some random text.</p>"
+    soup = BeautifulSoup(html_content, "html.parser")
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key is None
+    assert clustering_columns == []
+
+    # Test case: Partitioning mentioned but no key can be extracted
+    html_content = """
+    <p>The underlying data is partitioned by the column.</p>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    with pytest.raises(ValueError, match="Partitioning is mentioned but no partitioning key could be extracted"):
+        extract_partitioning_key(soup)
+
+    # Test case: Clustering mentioned but no columns can be extracted
+    html_content = """
+    <p>The underlying data is clustered by some columns.</p>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    with pytest.raises(ValueError, match="Clustering is mentioned but no clustering columns could be extracted"):
+        extract_partitioning_key(soup)
 
 
 def test_generate_sql_table_with_partitioning_key():
