@@ -1,4 +1,11 @@
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# Add the parent directory to the Python path so we can import the modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from bs4 import BeautifulSoup
 from documentation_parser import (
     parse_has_project_id_scope,
@@ -9,23 +16,27 @@ from documentation_parser import (
 )
 from sql_generator import generate_sql
 
+# Get the root directory (parent of tests)
+ROOT_DIR = Path(__file__).parent.parent
+TESTS_DIR = Path(__file__).parent
+
 
 def test_parse_required_role():
     # Test case: Required role is present
-    with open("html_content.html", "r") as file:
+    with open(ROOT_DIR / "html_content.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    with open("tests/html_content_expected.sql", "r") as file:
+    with open(TESTS_DIR / "html_content_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
     # Test case: Required role is present (second case)
-    with open("html_content_2.html", "r") as file:
+    with open(ROOT_DIR / "html_content_2.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    with open("tests/html_content_2_expected.sql", "r") as file:
+    with open(TESTS_DIR / "html_content_2_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -45,7 +56,7 @@ def test_parse_required_role():
 
 def test_parse_table_name():
     # Test case: Table name is present
-    with open("html_content.html", "r") as file:
+    with open(ROOT_DIR / "html_content.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_table_name(soup)
@@ -190,7 +201,7 @@ def test_generate_sql_table():
         "table",
         has_project_id_scope=True,
     )
-    with open("tests/test_generate_sql_table_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_table_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -210,7 +221,7 @@ def test_generate_sql_table_no_project_id():
         "table",
         has_project_id_scope=False,
     )
-    with open("tests/test_generate_sql_table_no_project_id_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_table_no_project_id_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -230,7 +241,7 @@ def test_generate_sql_dataset():
         "dataset",
         has_project_id_scope=True,
     )
-    with open("tests/test_generate_sql_dataset_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_dataset_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -324,7 +335,7 @@ def test_generate_sql_table_with_partitioning_key():
         partitioning_key=partitioning_key,
     )
     with open(
-        "tests/test_generate_sql_table_with_partitioning_key_expected.sql", "r"
+        TESTS_DIR / "test_generate_sql_table_with_partitioning_key_expected.sql", "r"
     ) as file:
         expected = file.read()
         assert result == expected
