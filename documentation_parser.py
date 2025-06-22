@@ -33,7 +33,7 @@ def parse_has_project_id_scope(soup):
     has_project_id = False
     # Search in all text content of the page
     page_text = soup.get_text()
-    if "[PROJECT_ID.]" in page_text or "[`PROJECT_ID`.]" in page_text:
+    if "[PROJECT_ID.]" in page_text or "[`PROJECT_ID`.]" in page_text or "PROJECT_ID" in page_text:
         has_project_id = True
     return has_project_id
 
@@ -296,6 +296,9 @@ def generate_files(
     # Create the SQL file
     with open(filename_sql, "w") as f:
         sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key, materialization)
+        # Ensure the SQL content ends with a newline
+        if not sql_file_content.endswith('\n'):
+            sql_file_content += '\n'
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
