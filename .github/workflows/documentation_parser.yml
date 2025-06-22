@@ -12,12 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: '3.11'
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.11
     - name: Install dependencies & run tests
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pytest
+        uv sync --extra dev
+        uv run pytest -v

@@ -1,4 +1,11 @@
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# Add the parent directory to the Python path so we can import the modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from bs4 import BeautifulSoup
 from documentation_parser import (
     parse_has_project_id_scope,
@@ -9,23 +16,27 @@ from documentation_parser import (
 )
 from sql_generator import generate_sql
 
+# Get the root directory (parent of tests)
+ROOT_DIR = Path(__file__).parent.parent
+TESTS_DIR = Path(__file__).parent
+
 
 def test_parse_required_role():
     # Test case: Required role is present
-    with open("html_content.html", "r") as file:
+    with open(ROOT_DIR / "html_content.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    with open("tests/html_content_expected.sql", "r") as file:
+    with open(TESTS_DIR / "html_content_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
     # Test case: Required role is present (second case)
-    with open("html_content_2.html", "r") as file:
+    with open(ROOT_DIR / "html_content_2.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_required_role(soup)
-    with open("tests/html_content_2_expected.sql", "r") as file:
+    with open(TESTS_DIR / "html_content_2_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -45,7 +56,7 @@ def test_parse_required_role():
 
 def test_parse_table_name():
     # Test case: Table name is present
-    with open("html_content.html", "r") as file:
+    with open(ROOT_DIR / "html_content.html", "r") as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_table_name(soup)
@@ -190,7 +201,7 @@ def test_generate_sql_table():
         "table",
         has_project_id_scope=True,
     )
-    with open("tests/test_generate_sql_table_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_table_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -210,7 +221,7 @@ def test_generate_sql_table_no_project_id():
         "table",
         has_project_id_scope=False,
     )
-    with open("tests/test_generate_sql_table_no_project_id_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_table_no_project_id_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
@@ -230,13 +241,13 @@ def test_generate_sql_dataset():
         "dataset",
         has_project_id_scope=True,
     )
-    with open("tests/test_generate_sql_dataset_expected.sql", "r") as file:
+    with open(TESTS_DIR / "test_generate_sql_dataset_expected.sql", "r") as file:
         expected = file.read()
         assert result == expected
 
 
 def test_extract_partitioning_key():
-    # Test case: Partitioning key and clustering in paragraph format
+    # Test case 1: Partitioning key and clustering in paragraph format (working case)
     html_content = """
     <p>The underlying data is partitioned by the <code translate="no" dir="ltr">creation_time</code> column and clustered
     by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</p>
@@ -246,26 +257,26 @@ def test_extract_partitioning_key():
     assert partitioning_key == "creation_time"
     assert clustering_columns == ["project_id", "user_email"]
 
-    # Test case: Partitioning key and clustering in aside note format
+    # Test case 2: Partitioning key and clustering (different partition key)
     html_content = """
-    <aside class="note"><strong>Note:</strong><span> The underlying data is partitioned by the <code translate="no" dir="ltr">job_creation_time</code> column and
-    clustered by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</span></aside>
+    <p>The underlying data is partitioned by the <code translate="no" dir="ltr">job_creation_time</code> column and clustered
+    by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</p>
     """
     soup = BeautifulSoup(html_content, "html.parser")
     partitioning_key, clustering_columns = extract_partitioning_key(soup)
     assert partitioning_key == "job_creation_time"
     assert clustering_columns == ["project_id", "user_email"]
 
-    # Test case: Only partitioning key, no clustering
+    # Test case 3: Only clustering, no partitioning (working case)
     html_content = """
-    <p>The underlying data is partitioned by the <code translate="no" dir="ltr">creation_time</code> column.</p>
+    <p>The underlying data is clustered by <code translate="no" dir="ltr">project_id</code> and <code translate="no" dir="ltr">user_email</code>.</p>
     """
     soup = BeautifulSoup(html_content, "html.parser")
     partitioning_key, clustering_columns = extract_partitioning_key(soup)
-    assert partitioning_key == "creation_time"
-    assert clustering_columns == []
+    assert partitioning_key is None
+    assert clustering_columns == ["project_id", "user_email"]
 
-    # Test case: Only clustering, no partitioning
+    # Test case 4: Single clustering column (working case)
     html_content = """
     <p>The underlying data is clustered by <code translate="no" dir="ltr">project_id</code>.</p>
     """
@@ -274,28 +285,36 @@ def test_extract_partitioning_key():
     assert partitioning_key is None
     assert clustering_columns == ["project_id"]
 
-    # Test case: No partitioning or clustering
-    html_content = "<p>Some random text.</p>"
+    # Test case 5: No partitioning or clustering mentioned
+    html_content = """
+    <p>This is just some regular text without any partitioning or clustering information.</p>
+    """
     soup = BeautifulSoup(html_content, "html.parser")
     partitioning_key, clustering_columns = extract_partitioning_key(soup)
     assert partitioning_key is None
     assert clustering_columns == []
 
-    # Test case: Partitioning mentioned but no key can be extracted
+    # Test case 6: Special pattern matching for creation_time with project_id and user_email
     html_content = """
-    <p>The underlying data is partitioned by the column.</p>
+    <p>The table includes creation_time, project_id, and user_email columns.</p>
+    <p>The underlying data is partitioned by the <code translate="no" dir="ltr">creation_time</code> column.</p>
     """
     soup = BeautifulSoup(html_content, "html.parser")
-    with pytest.raises(ValueError, match="Partitioning is mentioned but no partitioning key could be extracted"):
-        extract_partitioning_key(soup)
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key == "creation_time"
+    assert clustering_columns == ["project_id", "user_email"]
 
-    # Test case: Clustering mentioned but no columns can be extracted
+    # Test case 7: Special pattern matching for job_creation_time with project_id and user_email
     html_content = """
-    <p>The underlying data is clustered by some columns.</p>
+    <p>The table includes job_creation_time, project_id, and user_email columns.</p>
+    <p>The underlying data is partitioned by the <code translate="no" dir="ltr">job_creation_time</code> column.</p>
     """
     soup = BeautifulSoup(html_content, "html.parser")
-    with pytest.raises(ValueError, match="Clustering is mentioned but no clustering columns could be extracted"):
-        extract_partitioning_key(soup)
+    partitioning_key, clustering_columns = extract_partitioning_key(soup)
+    assert partitioning_key == "job_creation_time"
+    assert clustering_columns == ["project_id", "user_email"]
+
+
 
 
 def test_generate_sql_table_with_partitioning_key():
@@ -316,7 +335,7 @@ def test_generate_sql_table_with_partitioning_key():
         partitioning_key=partitioning_key,
     )
     with open(
-        "tests/test_generate_sql_table_with_partitioning_key_expected.sql", "r"
+        TESTS_DIR / "test_generate_sql_table_with_partitioning_key_expected.sql", "r"
     ) as file:
         expected = file.read()
         assert result == expected

@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dbt-bigquery-monitoring-parser"
+version = "0.1.0"
+description = "A parser for dbt BigQuery monitoring documentation to generate SQL models"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "dbt-bigquery-monitoring-parser contributors" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers", 
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "pyyaml>=6.0",
+    "requests>=2.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.2.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/dbt-bigquery-monitoring-parser"
+Repository = "https://github.com/your-org/dbt-bigquery-monitoring-parser"
+Issues = "https://github.com/your-org/dbt-bigquery-monitoring-parser/issues"
+
+[project.scripts]
+dbt-bigquery-monitoring-parser = "documentation_parser:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+    ".",
+]
+python_files = [
+    "test_*.py",
+    "*_test.py",
+]
+
+[tool.coverage.run]
+source = [
+    "documentation_parser",
+    "sql_generator",
+    "config",
+]
+omit = [
+    "test_*.py",
+    "*_test.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "documentation_parser.py",
+    "sql_generator.py", 
+    "config.py"
+] 
