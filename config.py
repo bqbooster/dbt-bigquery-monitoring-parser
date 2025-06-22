@@ -4,6 +4,7 @@ pages_to_process = {
         "dir": "access_control",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-object-privileges",
         "exclude_columns": ["privlege_type"],
+        "materialization": "ephemeral",
     },
     # BI Engine
     "bi_capacities": {

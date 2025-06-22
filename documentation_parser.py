@@ -28,16 +28,13 @@ def parse_table_name(soup):
 
 
 
-# check if the page contains `Optional: PROJECT_ID: the ID of your Google Cloud project. If not specified, the default project is used.`
+# check if the page contains `[PROJECT_ID.]` presence
 def parse_has_project_id_scope(soup):
     has_project_id = False
-    for p_tag in soup.find_all("p"):
-        if (
-            "Google Cloud project. If not specified, the default project is used."
-            in p_tag.text
-        ):
-            has_project_id = True
-            break
+    # Search in all text content of the page
+    page_text = soup.get_text()
+    if "[PROJECT_ID.]" in page_text or "[`PROJECT_ID`.]" in page_text:
+        has_project_id = True
     return has_project_id
 
 def parse_required_role(soup):
@@ -198,7 +195,7 @@ def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
 
 def generate_files(
     filename: str, dir: str, url: str,
-    exclude_columns: List[str], override_table_name: str, type: str
+    exclude_columns: List[str], override_table_name: str, type: str, materialization: str = None
 ):
     # Fetch the HTML content from the URL
     response = requests.get(url)
@@ -298,7 +295,7 @@ def generate_files(
 
     # Create the SQL file
     with open(filename_sql, "w") as f:
-        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key)
+        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key, materialization)
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
@@ -313,6 +310,7 @@ def generate_all():
             target.get("exclude_columns"),
             target.get("override_table_name"),
             target.get("type"),
+            target.get("materialization"),
         )
 
 
@@ -326,6 +324,7 @@ def generate_for_key(key: str):
             target.get("exclude_columns"),
             target.get("override_table_name"),
             target.get("type"),
+            target.get("materialization"),
         )
     else:
         print(f"Error: Could not find key {key} in the pages_to_process dictionary.")
