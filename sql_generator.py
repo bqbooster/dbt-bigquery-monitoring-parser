@@ -21,7 +21,7 @@ FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
     columns_str = ",\n".join(column_names)
 
     # Generate a SQL for fallback in case of no datasets
-    columns_with_empty_values_arr = [f"CAST(NULL AS {column['type']}) AS {column['name'].lower()}" for column in columns]
+    columns_with_empty_values_arr = [f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}" for column in columns]
     columns_with_empty_values_str = ", ".join(columns_with_empty_values_arr)
 
     sql = textwrap.dedent(f"""{{# More details about base table in {url} -#}}
@@ -70,9 +70,9 @@ FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
         if partitioning_key:
             config_block += f", partition_by={{'field': '{partitioning_key}', 'data_type': 'timestamp', 'granularity': 'hour'}}, partition_expiration_days=180"
         config_block += ") }}"
-        query = textwrap.dedent(f"""{config_block}
-{query}
-  """)
+        
+        query = f"""{config_block}
+{query}"""
 
     return query
 

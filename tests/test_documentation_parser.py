@@ -189,9 +189,9 @@ def test_update_column_list():
 def test_generate_sql_table():
     # Test generate_sql function
     columns = [
-        {"name": "field1", "type": "STRING", "description": "Field 1"},
-        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
-        {"name": "field3", "type": "STRING", "description": "Field 3"},
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
     ]
     result = generate_sql(
         "https://cloud.google.com/bigquery/docs/information-schema-jobs",
@@ -209,9 +209,9 @@ def test_generate_sql_table():
 def test_generate_sql_table_no_project_id():
     # Test generate_sql function
     columns = [
-        {"name": "field1", "type": "STRING", "description": "Field 1"},
-        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
-        {"name": "field3", "type": "STRING", "description": "Field 3"},
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
     ]
     result = generate_sql(
         "https://cloud.google.com/bigquery/docs/information-schema-jobs",
@@ -229,9 +229,9 @@ def test_generate_sql_table_no_project_id():
 def test_generate_sql_dataset():
     # Test generate_sql function
     columns = [
-        {"name": "field1", "type": "STRING", "description": "Field 1"},
-        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
-        {"name": "field3", "type": "STRING", "description": "Field 3"},
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
     ]
     result = generate_sql(
         "https://cloud.google.com/bigquery/docs/information-schema-jobs",
@@ -320,9 +320,9 @@ def test_extract_partitioning_key():
 def test_generate_sql_table_with_partitioning_key():
     # Test generate_sql function with partitioning key
     columns = [
-        {"name": "field1", "type": "STRING", "description": "Field 1"},
-        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
-        {"name": "field3", "type": "STRING", "description": "Field 3"},
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
     ]
     partitioning_key = "creation_time"
     result = generate_sql(
@@ -336,6 +336,79 @@ def test_generate_sql_table_with_partitioning_key():
     )
     with open(
         TESTS_DIR / "test_generate_sql_table_with_partitioning_key_expected.sql", "r"
+    ) as file:
+        expected = file.read()
+        assert result == expected
+
+
+def test_generate_sql_table_with_custom_materialization():
+    # Test generate_sql function with custom materialization and no project scoping
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=False,
+        partitioning_key=None,
+        materialization="view",
+    )
+    with open(
+        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_expected.sql", "r"
+    ) as file:
+        expected = file.read()
+        assert result == expected
+
+
+def test_generate_sql_table_with_custom_materialization_and_project_scope():
+    # Test generate_sql function with custom materialization and project scoping
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        partitioning_key=None,
+        materialization="incremental",
+    )
+    with open(
+        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_and_project_scope_expected.sql", "r"
+    ) as file:
+        expected = file.read()
+        assert result == expected
+
+
+def test_generate_sql_table_with_custom_materialization_and_partitioning():
+    # Test generate_sql function with custom materialization, project scoping, and partitioning
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "data_type": "STRING", "description": "Field 3"},
+    ]
+    partitioning_key = "creation_time"
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        partitioning_key=partitioning_key,
+        materialization="table",
+    )
+    with open(
+        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_and_partitioning_expected.sql", "r"
     ) as file:
         expected = file.read()
         assert result == expected

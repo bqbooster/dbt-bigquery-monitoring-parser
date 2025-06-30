@@ -270,7 +270,7 @@ def generate_files(
                         {
                             "name": column["name"],
                             "description": column["description"],
-                            "type": column["type"],
+                            "data_type": column["type"]
                         }
                         for column in columns
                     ],
@@ -293,9 +293,19 @@ def generate_files(
     )
     sql_type = "table" if type is None else type
 
+    # Transform columns to new nested structure for SQL generation
+    columns_for_sql = [
+        {
+            "name": column["name"],
+            "description": column["description"],
+            "data_type": column["type"]
+        }
+        for column in columns
+    ]
+    
     # Create the SQL file
     with open(filename_sql, "w") as f:
-        sql_file_content = generate_sql(url, columns, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key, materialization)
+        sql_file_content = generate_sql(url, columns_for_sql, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key, materialization)
         # Ensure the SQL content ends with a newline
         if not sql_file_content.endswith('\n'):
             sql_file_content += '\n'
