@@ -86,7 +86,7 @@ pages_to_process = {
     "jobs_by_organization": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-organization",
-        "exclude_columns": ["query_info.resource_warning", "query_info.query_hashes.normalized_literals", "query_info.performance_insights", "query_info.optimization_details", "folder_numbers"],
+        "exclude_columns": ["query", "query_info.resource_warning", "query_info.query_hashes.normalized_literals", "query_info.performance_insights", "query_info.optimization_details", "folder_numbers"],
     },
     # jobs timeline
     "jobs_timeline": {
