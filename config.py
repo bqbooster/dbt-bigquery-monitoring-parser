@@ -165,10 +165,12 @@ pages_to_process = {
     },
     # search indexes
     "search_indexes": {
+        "type": "dataset",
         "dir": "search_indexes",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-indexes",
     },
     "search_index_columns": {
+        "type": "dataset",
         "dir": "search_indexes",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-index-columns",
     },

@@ -1,0 +1,16 @@
+version: 2
+models:
+  - name: information_schema_test_table_with_complex_columns
+    description: dataset details with related information
+    columns:
+      - name: column1
+        description: Column 1
+        data_type: STRING
+      - name: column3
+        description: "column3.subcolumn1 : Subcolumn 1 of Column 3
+
+          column3.subcolumn2 : Subcolumn 2 of Column 3"
+        data_type: RECORD
+      - name: column4
+        description: "column4.subcolumn1 : Subcolumn 1 of Column 4"
+        data_type: RECORD

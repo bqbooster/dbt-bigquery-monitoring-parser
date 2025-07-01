@@ -13,6 +13,7 @@ from documentation_parser import (
     parse_table_name,
     update_column_list,
     extract_partitioning_key,
+    generate_yml,
 )
 from sql_generator import generate_sql
 
@@ -412,3 +413,164 @@ def test_generate_sql_table_with_custom_materialization_and_partitioning():
     ) as file:
         expected = file.read()
         assert result == expected
+
+
+def test_generate_yml():
+    # Test generate_yml function with simple columns
+    columns = [
+        {"name": "field1", "type": "STRING", "description": "Field 1"},
+        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
+        {"name": "field3", "type": "STRING", "description": "Field 3"},
+    ]
+    result = generate_yml("information_schema_test_table", columns)
+    with open(TESTS_DIR / "test_generate_yml_expected.yml", "r") as file:
+        expected = file.read()
+        assert result == expected
+
+
+def test_generate_yml_with_complex_columns():
+    # Test generate_yml function with complex columns (including RECORD types)
+    columns = [
+        {"name": "column1", "type": "STRING", "description": "Column 1"},
+        {
+            "name": "column3",
+            "type": "RECORD",
+            "description": "column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3",
+        },
+        {
+            "name": "column4",
+            "type": "RECORD",
+            "description": "column4.subcolumn1 : Subcolumn 1 of Column 4",
+        },
+    ]
+    result = generate_yml("information_schema_test_table_with_complex_columns", columns)
+    with open(TESTS_DIR / "test_generate_yml_with_complex_columns_expected.yml", "r") as file:
+        expected = file.read()
+        assert result == expected
+
+
+def test_generate_yml_empty_columns():
+    # Test generate_yml function with no columns
+    columns = []
+    result = generate_yml("information_schema_empty_table", columns)
+    expected = """version: 2
+models:
+-   name: information_schema_empty_table
+    description: dataset details with related information
+    columns: []
+"""
+    assert result == expected
+
+
+def test_generate_yml_special_characters_in_description():
+    # Test generate_yml function with special characters in descriptions
+    columns = [
+        {
+            "name": "special_field",
+            "type": "STRING",
+            "description": "This field contains special characters: @#$%^&*()_+ and \"quotes\"",
+        },
+        {
+            "name": "multiline_field",
+            "type": "STRING",
+            "description": "This is a\nmultiline description\nwith line breaks",
+        },
+    ]
+    result = generate_yml("information_schema_special_table", columns)
+    
+    # Check that the result is valid YAML
+    import yaml
+    parsed = yaml.safe_load(result)
+    assert parsed["version"] == 2
+    assert len(parsed["models"]) == 1
+    assert parsed["models"][0]["name"] == "information_schema_special_table"
+    assert len(parsed["models"][0]["columns"]) == 2
+    
+    # Check specific field values
+    columns_dict = {col["name"]: col for col in parsed["models"][0]["columns"]}
+    assert columns_dict["special_field"]["description"] == "This field contains special characters: @#$%^&*()_+ and \"quotes\""
+    assert columns_dict["multiline_field"]["description"] == "This is a\nmultiline description\nwith line breaks"
+
+
+def test_generate_yml_integration_with_generate_files():
+    # Test that generate_files creates proper YAML files
+    # This is a mock test that doesn't actually make HTTP requests
+    
+    # Mock data that would normally come from parsing HTML
+    test_columns = [
+        {"name": "test_field1", "type": "STRING", "description": "Test field 1"},
+        {"name": "test_field2", "type": "INTEGER", "description": "Test field 2"},
+    ]
+    
+    # Test the generate_yml function with the same structure used in generate_files
+    model_name = "information_schema_test_integration"
+    result = generate_yml(model_name, test_columns)
+    
+    # Verify the structure
+    import yaml
+    parsed = yaml.safe_load(result)
+    
+    assert parsed["version"] == 2
+    assert len(parsed["models"]) == 1
+    
+    model = parsed["models"][0]
+    assert model["name"] == model_name
+    assert model["description"] == "dataset details with related information"
+    assert len(model["columns"]) == 2
+    
+    # Verify column structure
+    columns = {col["name"]: col for col in model["columns"]}
+    assert "test_field1" in columns
+    assert "test_field2" in columns
+    assert columns["test_field1"]["data_type"] == "STRING"
+    assert columns["test_field1"]["description"] == "Test field 1"
+    assert columns["test_field2"]["data_type"] == "INTEGER"
+    assert columns["test_field2"]["description"] == "Test field 2"
+
+
+def test_yml_indentation_format():
+    # Test that the YAML output has proper indentation (4 spaces)
+    columns = [
+        {"name": "field1", "type": "STRING", "description": "Field 1"},
+        {"name": "field2", "type": "INTEGER", "description": "Field 2"},
+    ]
+    result = generate_yml("test_model", columns)
+    
+    lines = result.split('\n')
+    
+    # Check specific indentation patterns
+    assert lines[0] == "version: 2"  # No indentation for top level
+    assert lines[1] == "models:"     # No indentation for top level
+    assert lines[2] == "-   name: test_model"  # 4 spaces for list item
+    assert lines[3] == "    description: dataset details with related information"  # 4 spaces
+    assert lines[4] == "    columns:"  # 4 spaces
+    assert lines[5] == "    -   name: field1"  # 4 spaces for nested list item
+    assert lines[6] == "        description: Field 1"  # 8 spaces for nested content
+    assert lines[7] == "        data_type: STRING"  # 8 spaces for nested content
+
+
+def test_yml_special_characters_handling():
+    # Test that YAML properly handles special characters and multiline descriptions
+    columns = [
+        {
+            "name": "special_chars", 
+            "type": "STRING", 
+            "description": "Field with special chars: @#$%^&*()_+ and \"quotes\""
+        },
+        {
+            "name": "multiline_desc", 
+            "type": "STRING", 
+            "description": "Line 1\nLine 2\nLine 3"
+        },
+    ]
+    result = generate_yml("test_special", columns)
+    
+    # Parse the YAML to ensure it's valid
+    import yaml
+    parsed = yaml.safe_load(result)
+    
+    # Verify the special characters and multiline content are preserved
+    columns_dict = {col["name"]: col for col in parsed["models"][0]["columns"]}
+    
+    assert columns_dict["special_chars"]["description"] == "Field with special chars: @#$%^&*()_+ and \"quotes\""
+    assert columns_dict["multiline_desc"]["description"] == "Line 1\nLine 2\nLine 3"

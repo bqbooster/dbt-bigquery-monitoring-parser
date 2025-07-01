@@ -260,24 +260,8 @@ def generate_files(
 
     # Create the YML file
     with open(filename_yml, "w") as f:
-        yaml_data = {
-            "version": 2,
-            "models": [
-                {
-                    "name": model_name,
-                    "description": "dataset details with related information",
-                    "columns": [
-                        {
-                            "name": column["name"],
-                            "description": column["description"],
-                            "data_type": column["type"]
-                        }
-                        for column in columns
-                    ],
-                }
-            ],
-        }
-        yaml.dump(yaml_data, f, sort_keys=False)
+        yml_content = generate_yml(model_name, columns)
+        f.write(yml_content)
 
     filename_sql = f"{base_filename}.sql"
 
@@ -312,6 +296,39 @@ def generate_files(
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
+
+
+def generate_yml(model_name: str, columns: List[dict]) -> str:
+    """
+    Generate YAML content for a dbt model with proper 4-space indentation.
+    
+    Args:
+        model_name: The name of the model
+        columns: List of column dictionaries with 'name', 'description', and 'type' keys
+    
+    Returns:
+        Formatted YAML string with 4-space indentation
+    """
+    yaml_data = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "description": "dataset details with related information",
+                "columns": [
+                    {
+                        "name": column["name"],
+                        "description": column["description"],
+                        "data_type": column.get("data_type", column.get("type"))
+                    }
+                    for column in columns
+                ],
+            }
+        ],
+    }
+    
+    # Use yaml.dump with proper indentation and formatting
+    return yaml.dump(yaml_data, sort_keys=False, default_flow_style=False, indent=4)
 
 
 def generate_all():
