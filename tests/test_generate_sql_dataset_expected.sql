@@ -1,3 +1,4 @@
+{{ config(materialized=dbt_bigquery_monitoring_materialization()) }}
 {# More details about base table in https://cloud.google.com/bigquery/docs/information-schema-jobs -#}
 jobs.admin
 
@@ -22,7 +23,7 @@ WITH base AS (
   field1,
 field2,
 field3
-  FROM {{ dataset | trim }}.`INFORMATION_SCHEMA`.`PARTITIONS`
+  FROM {{ dataset | trim }}.`INFORMATION_SCHEMA`.`jobs`
 {% if not loop.last %}UNION ALL{% endif %}
 {% endfor %}
 {%- endif -%}
@@ -30,6 +31,6 @@ field3
 SELECT
 field1,
 field2,
-field3,
+field3
 FROM
 base

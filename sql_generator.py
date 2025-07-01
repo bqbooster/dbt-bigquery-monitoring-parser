@@ -3,7 +3,15 @@ from typing import List
 
 
 def generate_sql_for_dataset(
-    url: str, columns: List[dict], table_name: str, required_role_str: str
+    url: str,
+    columns: List[dict],
+    table_name: str,
+    required_role_str: str,
+    has_project_id_scope: bool,
+    partitioning_key: str = None,
+    materialization: str = None,
+    enabled: bool = None,
+    tags: List[str] = None,
 ):
     # Prepare a run_query statement to fetch datasets for the list of projects
     preflight_sql = textwrap.dedent(f"""
@@ -41,15 +49,42 @@ WITH base AS (
 {{% for dataset in dataset_list -%}}
   SELECT
   {columns_str}
-  FROM {{{{ dataset | trim }}}}.`INFORMATION_SCHEMA`.`PARTITIONS`
+  FROM {{{{ dataset | trim }}}}.`INFORMATION_SCHEMA`.`{table_name}`
 {{% if not loop.last %}}UNION ALL{{% endif %}}
 {{% endfor %}}
 {{%- endif -%}}
 )
 SELECT
-{columns_str},
+{columns_str}
 FROM
 base""")
+
+    # Add config block if we have project scoping, custom materialization, enabled, or tags
+    if has_project_id_scope or materialization or enabled is not None or tags:
+        # Use custom materialization if provided, otherwise use default for project-scoped tables
+        if materialization:
+            config_block = f"{{{{ config(materialized='{materialization}'"
+        else:
+            config_block = (
+                "{{ config(materialized=dbt_bigquery_monitoring_materialization()"
+            )
+
+        # Add enabled parameter
+        if enabled is not None:
+            config_block += f", enabled={'true' if enabled else 'false'}"
+
+        # Add tags parameter
+        if tags:
+            tags_str = '["' + '", "'.join(tags) + '"]'
+            config_block += f", tags={tags_str}"
+
+        # Add partitioning configuration
+        if partitioning_key:
+            config_block += f", partition_by={{'field': '{partitioning_key}', 'data_type': 'timestamp', 'granularity': 'hour'}}, partition_expiration_days=180"
+        config_block += ") }}"
+
+        sql = f"""{config_block}
+{sql}"""
 
     return sql
 
@@ -131,6 +166,16 @@ def generate_sql(
             tags,
         )
     elif type == "dataset":
-        return generate_sql_for_dataset(url, columns, table_name, required_role_str)
+        return generate_sql_for_dataset(
+            url,
+            columns,
+            table_name,
+            required_role_str,
+            has_project_id_scope,
+            partitioning_key,
+            materialization,
+            enabled,
+            tags,
+        )
     else:
         raise ValueError(f"Invalid type: {type}")
