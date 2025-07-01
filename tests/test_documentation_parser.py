@@ -535,9 +535,8 @@ def test_generate_yml_empty_columns():
     result = generate_yml("information_schema_empty_table", columns)
     expected = """version: 2
 models:
--   name: information_schema_empty_table
-    description: dataset details with related information
-    columns: []
+- name: information_schema_empty_table
+  columns: []
 """
     assert result == expected
 
@@ -595,7 +594,6 @@ def test_generate_yml_integration_with_generate_files():
     
     model = parsed["models"][0]
     assert model["name"] == model_name
-    assert model["description"] == "dataset details with related information"
     assert len(model["columns"]) == 2
     
     # Verify column structure
@@ -609,7 +607,7 @@ def test_generate_yml_integration_with_generate_files():
 
 
 def test_yml_indentation_format():
-    # Test that the YAML output has proper indentation (4 spaces)
+    # Test that the YAML output has proper indentation (2 spaces)
     columns = [
         {"name": "field1", "type": "STRING", "description": "Field 1"},
         {"name": "field2", "type": "INTEGER", "description": "Field 2"},
@@ -621,12 +619,11 @@ def test_yml_indentation_format():
     # Check specific indentation patterns
     assert lines[0] == "version: 2"  # No indentation for top level
     assert lines[1] == "models:"     # No indentation for top level
-    assert lines[2] == "-   name: test_model"  # 4 spaces for list item
-    assert lines[3] == "    description: dataset details with related information"  # 4 spaces
-    assert lines[4] == "    columns:"  # 4 spaces
-    assert lines[5] == "    -   name: field1"  # 4 spaces for nested list item
-    assert lines[6] == "        description: Field 1"  # 8 spaces for nested content
-    assert lines[7] == "        data_type: STRING"  # 8 spaces for nested content
+    assert lines[2] == "- name: test_model"  # No leading spaces for list item
+    assert lines[3] == "  columns:"  # 2 spaces
+    assert lines[4] == "  - name: field1"  # 2 spaces for nested list item
+    assert lines[5] == "    description: Field 1"  # 4 spaces for nested content
+    assert lines[6] == "    data_type: STRING"  # 4 spaces for nested content
 
 
 def test_yml_special_characters_handling():

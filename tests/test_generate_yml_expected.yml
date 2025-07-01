@@ -1,14 +1,13 @@
 version: 2
 models:
-  - name: information_schema_test_table
-    description: dataset details with related information
-    columns:
-      - name: field1
-        description: Field 1
-        data_type: STRING
-      - name: field2
-        description: Field 2
-        data_type: INTEGER
-      - name: field3
-        description: Field 3
-        data_type: STRING
+- name: information_schema_test_table
+  columns:
+  - name: field1
+    description: Field 1
+    data_type: STRING
+  - name: field2
+    description: Field 2
+    data_type: INTEGER
+  - name: field3
+    description: Field 3
+    data_type: STRING

@@ -314,7 +314,6 @@ def generate_yml(model_name: str, columns: List[dict]) -> str:
         "models": [
             {
                 "name": model_name,
-                "description": "dataset details with related information",
                 "columns": [
                     {
                         "name": column["name"],
@@ -328,7 +327,7 @@ def generate_yml(model_name: str, columns: List[dict]) -> str:
     }
     
     # Use yaml.dump with proper indentation and formatting
-    return yaml.dump(yaml_data, sort_keys=False, default_flow_style=False, indent=4)
+    return yaml.dump(yaml_data, sort_keys=False, default_flow_style=False, indent=2)
 
 
 def generate_all():
