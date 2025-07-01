@@ -334,6 +334,8 @@ def test_generate_sql_table_with_partitioning_key():
         "table",
         has_project_id_scope=True,
         partitioning_key=partitioning_key,
+        enabled=True,
+        tags=["test"],
     )
     with open(
         TESTS_DIR / "test_generate_sql_table_with_partitioning_key_expected.sql", "r"
@@ -413,6 +415,84 @@ def test_generate_sql_table_with_custom_materialization_and_partitioning():
     ) as file:
         expected = file.read()
         assert result == expected
+
+
+def test_generate_sql_table_with_enabled_false():
+    # Test generate_sql function with enabled=false
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        enabled=False,
+    )
+    expected_config = "{{ config(materialized=dbt_bigquery_monitoring_materialization(), enabled=false) }}"
+    assert expected_config in result
+
+
+def test_generate_sql_table_with_tags_only():
+    # Test generate_sql function with tags only
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        tags=["monitoring", "bigquery"],
+    )
+    expected_config = 'tags=["monitoring", "bigquery"]'
+    assert expected_config in result
+
+
+def test_generate_sql_table_with_enabled_and_tags():
+    # Test generate_sql function with both enabled and tags
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        enabled=True,
+        tags=["test", "development"],
+    )
+    # Check that both enabled and tags are in the config
+    assert "enabled=true" in result
+    assert 'tags=["test", "development"]' in result
+
+
+def test_generate_sql_table_no_project_scope_with_enabled_tags():
+    # Test that enabled and tags still work even without project scope
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=False,
+        enabled=False,
+        tags=["basic"],
+    )
+    # Should have a config block even without project scope
+    assert "{{ config(" in result
+    assert "enabled=false" in result
+    assert 'tags=["basic"]' in result
 
 
 def test_generate_yml():
@@ -574,3 +654,47 @@ def test_yml_special_characters_handling():
     
     assert columns_dict["special_chars"]["description"] == "Field with special chars: @#$%^&*()_+ and \"quotes\""
     assert columns_dict["multiline_desc"]["description"] == "Line 1\nLine 2\nLine 3"
+
+
+def test_generate_sql_config_parameter_order():
+    # Test that config parameters appear in the expected order:
+    # materialized, enabled, tags, partition_by, partition_expiration_days
+    columns = [
+        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
+    ]
+    result = generate_sql(
+        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        columns,
+        "jobs",
+        "jobs.admin",
+        "table",
+        has_project_id_scope=True,
+        partitioning_key="creation_time",
+        enabled=True,
+        tags=["test", "monitoring"],
+    )
+    
+    # Find the config line
+    config_line = None
+    for line in result.split('\n'):
+        if line.strip().startswith('{{ config('):
+            config_line = line.strip()
+            break
+    
+    assert config_line is not None
+    # Check that the parameters appear in the expected order
+    materialized_pos = config_line.find('materialized=')
+    enabled_pos = config_line.find('enabled=')
+    tags_pos = config_line.find('tags=')
+    partition_pos = config_line.find('partition_by=')
+    
+    # All should be found
+    assert materialized_pos != -1
+    assert enabled_pos != -1
+    assert tags_pos != -1
+    assert partition_pos != -1
+    
+    # Check order: materialized < enabled < tags < partition_by
+    assert materialized_pos < enabled_pos
+    assert enabled_pos < tags_pos
+    assert tags_pos < partition_pos

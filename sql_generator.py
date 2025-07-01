@@ -47,7 +47,7 @@ base""")
 
     return sql
 
-def generate_sql_for_table(url: str, columns: List[dict], table_name: str, required_role_str: str, has_project_id_scope: bool, partitioning_key: str, materialization: str = None):
+def generate_sql_for_table(url: str, columns: List[dict], table_name: str, required_role_str: str, has_project_id_scope: bool, partitioning_key: str, materialization: str = None, enabled: bool = None, tags: List[str] = None):
     # Prepare the column names as a comma-separated string
     column_names = [column["name"].lower() for column in columns]
     columns_str = ",\n".join(column_names)
@@ -59,14 +59,24 @@ SELECT
 {columns_str}
 FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
     
-    # Add config block if we have project scoping or custom materialization
-    if has_project_id_scope or materialization:
+    # Add config block if we have project scoping, custom materialization, enabled, or tags
+    if has_project_id_scope or materialization or enabled is not None or tags:
         # Use custom materialization if provided, otherwise use default for project-scoped tables
         if materialization:
             config_block = f"{{{{ config(materialized='{materialization}'"
         else:
             config_block = "{{ config(materialized=dbt_bigquery_monitoring_materialization()"
         
+        # Add enabled parameter
+        if enabled is not None:
+            config_block += f", enabled={'true' if enabled else 'false'}"
+        
+        # Add tags parameter
+        if tags:
+            tags_str = '["' + '", "'.join(tags) + '"]'
+            config_block += f", tags={tags_str}"
+        
+        # Add partitioning configuration
         if partitioning_key:
             config_block += f", partition_by={{'field': '{partitioning_key}', 'data_type': 'timestamp', 'granularity': 'hour'}}, partition_expiration_days=180"
         config_block += ") }}"
@@ -76,9 +86,9 @@ FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
 
     return query
 
-def generate_sql(url: str, columns: List[dict], table_name: str, required_role_str: str, type: str, has_project_id_scope: bool, partitioning_key: str = None, materialization: str = None):
+def generate_sql(url: str, columns: List[dict], table_name: str, required_role_str: str, type: str, has_project_id_scope: bool, partitioning_key: str = None, materialization: str = None, enabled: bool = None, tags: List[str] = None):
     if type == "table":
-        return generate_sql_for_table(url, columns, table_name, required_role_str, has_project_id_scope, partitioning_key, materialization)
+        return generate_sql_for_table(url, columns, table_name, required_role_str, has_project_id_scope, partitioning_key, materialization, enabled, tags)
     elif type == "dataset":
         return generate_sql_for_dataset(url, columns, table_name, required_role_str)
     else:
