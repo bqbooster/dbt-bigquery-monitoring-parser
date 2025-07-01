@@ -222,7 +222,9 @@ def test_generate_sql_table_no_project_id():
         "table",
         has_project_id_scope=False,
     )
-    with open(TESTS_DIR / "test_generate_sql_table_no_project_id_expected.sql", "r") as file:
+    with open(
+        TESTS_DIR / "test_generate_sql_table_no_project_id_expected.sql", "r"
+    ) as file:
         expected = file.read()
         assert result == expected
 
@@ -316,8 +318,6 @@ def test_extract_partitioning_key():
     assert clustering_columns == ["project_id", "user_email"]
 
 
-
-
 def test_generate_sql_table_with_partitioning_key():
     # Test generate_sql function with partitioning key
     columns = [
@@ -362,7 +362,8 @@ def test_generate_sql_table_with_custom_materialization():
         materialization="view",
     )
     with open(
-        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_expected.sql", "r"
+        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_expected.sql",
+        "r",
     ) as file:
         expected = file.read()
         assert result == expected
@@ -386,7 +387,9 @@ def test_generate_sql_table_with_custom_materialization_and_project_scope():
         materialization="incremental",
     )
     with open(
-        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_and_project_scope_expected.sql", "r"
+        TESTS_DIR
+        / "test_generate_sql_table_with_custom_materialization_and_project_scope_expected.sql",
+        "r",
     ) as file:
         expected = file.read()
         assert result == expected
@@ -411,7 +414,9 @@ def test_generate_sql_table_with_custom_materialization_and_partitioning():
         materialization="table",
     )
     with open(
-        TESTS_DIR / "test_generate_sql_table_with_custom_materialization_and_partitioning_expected.sql", "r"
+        TESTS_DIR
+        / "test_generate_sql_table_with_custom_materialization_and_partitioning_expected.sql",
+        "r",
     ) as file:
         expected = file.read()
         assert result == expected
@@ -524,7 +529,9 @@ def test_generate_yml_with_complex_columns():
         },
     ]
     result = generate_yml("information_schema_test_table_with_complex_columns", columns)
-    with open(TESTS_DIR / "test_generate_yml_with_complex_columns_expected.yml", "r") as file:
+    with open(
+        TESTS_DIR / "test_generate_yml_with_complex_columns_expected.yml", "r"
+    ) as file:
         expected = file.read()
         assert result == expected
 
@@ -547,7 +554,7 @@ def test_generate_yml_special_characters_in_description():
         {
             "name": "special_field",
             "type": "STRING",
-            "description": "This field contains special characters: @#$%^&*()_+ and \"quotes\"",
+            "description": 'This field contains special characters: @#$%^&*()_+ and "quotes"',
         },
         {
             "name": "multiline_field",
@@ -556,46 +563,54 @@ def test_generate_yml_special_characters_in_description():
         },
     ]
     result = generate_yml("information_schema_special_table", columns)
-    
+
     # Check that the result is valid YAML
     import yaml
+
     parsed = yaml.safe_load(result)
     assert parsed["version"] == 2
     assert len(parsed["models"]) == 1
     assert parsed["models"][0]["name"] == "information_schema_special_table"
     assert len(parsed["models"][0]["columns"]) == 2
-    
+
     # Check specific field values
     columns_dict = {col["name"]: col for col in parsed["models"][0]["columns"]}
-    assert columns_dict["special_field"]["description"] == "This field contains special characters: @#$%^&*()_+ and \"quotes\""
-    assert columns_dict["multiline_field"]["description"] == "This is a\nmultiline description\nwith line breaks"
+    assert (
+        columns_dict["special_field"]["description"]
+        == 'This field contains special characters: @#$%^&*()_+ and "quotes"'
+    )
+    assert (
+        columns_dict["multiline_field"]["description"]
+        == "This is a\nmultiline description\nwith line breaks"
+    )
 
 
 def test_generate_yml_integration_with_generate_files():
     # Test that generate_files creates proper YAML files
     # This is a mock test that doesn't actually make HTTP requests
-    
+
     # Mock data that would normally come from parsing HTML
     test_columns = [
         {"name": "test_field1", "type": "STRING", "description": "Test field 1"},
         {"name": "test_field2", "type": "INTEGER", "description": "Test field 2"},
     ]
-    
+
     # Test the generate_yml function with the same structure used in generate_files
     model_name = "information_schema_test_integration"
     result = generate_yml(model_name, test_columns)
-    
+
     # Verify the structure
     import yaml
+
     parsed = yaml.safe_load(result)
-    
+
     assert parsed["version"] == 2
     assert len(parsed["models"]) == 1
-    
+
     model = parsed["models"][0]
     assert model["name"] == model_name
     assert len(model["columns"]) == 2
-    
+
     # Verify column structure
     columns = {col["name"]: col for col in model["columns"]}
     assert "test_field1" in columns
@@ -613,12 +628,12 @@ def test_yml_indentation_format():
         {"name": "field2", "type": "INTEGER", "description": "Field 2"},
     ]
     result = generate_yml("test_model", columns)
-    
-    lines = result.split('\n')
-    
+
+    lines = result.split("\n")
+
     # Check specific indentation patterns
     assert lines[0] == "version: 2"  # No indentation for top level
-    assert lines[1] == "models:"     # No indentation for top level
+    assert lines[1] == "models:"  # No indentation for top level
     assert lines[2] == "- name: test_model"  # No leading spaces for list item
     assert lines[3] == "  columns:"  # 2 spaces
     assert lines[4] == "  - name: field1"  # 2 spaces for nested list item
@@ -630,26 +645,30 @@ def test_yml_special_characters_handling():
     # Test that YAML properly handles special characters and multiline descriptions
     columns = [
         {
-            "name": "special_chars", 
-            "type": "STRING", 
-            "description": "Field with special chars: @#$%^&*()_+ and \"quotes\""
+            "name": "special_chars",
+            "type": "STRING",
+            "description": 'Field with special chars: @#$%^&*()_+ and "quotes"',
         },
         {
-            "name": "multiline_desc", 
-            "type": "STRING", 
-            "description": "Line 1\nLine 2\nLine 3"
+            "name": "multiline_desc",
+            "type": "STRING",
+            "description": "Line 1\nLine 2\nLine 3",
         },
     ]
     result = generate_yml("test_special", columns)
-    
+
     # Parse the YAML to ensure it's valid
     import yaml
+
     parsed = yaml.safe_load(result)
-    
+
     # Verify the special characters and multiline content are preserved
     columns_dict = {col["name"]: col for col in parsed["models"][0]["columns"]}
-    
-    assert columns_dict["special_chars"]["description"] == "Field with special chars: @#$%^&*()_+ and \"quotes\""
+
+    assert (
+        columns_dict["special_chars"]["description"]
+        == 'Field with special chars: @#$%^&*()_+ and "quotes"'
+    )
     assert columns_dict["multiline_desc"]["description"] == "Line 1\nLine 2\nLine 3"
 
 
@@ -670,28 +689,213 @@ def test_generate_sql_config_parameter_order():
         enabled=True,
         tags=["test", "monitoring"],
     )
-    
+
     # Find the config line
     config_line = None
-    for line in result.split('\n'):
-        if line.strip().startswith('{{ config('):
+    for line in result.split("\n"):
+        if line.strip().startswith("{{ config("):
             config_line = line.strip()
             break
-    
+
     assert config_line is not None
     # Check that the parameters appear in the expected order
-    materialized_pos = config_line.find('materialized=')
-    enabled_pos = config_line.find('enabled=')
-    tags_pos = config_line.find('tags=')
-    partition_pos = config_line.find('partition_by=')
-    
+    materialized_pos = config_line.find("materialized=")
+    enabled_pos = config_line.find("enabled=")
+    tags_pos = config_line.find("tags=")
+    partition_pos = config_line.find("partition_by=")
+
     # All should be found
     assert materialized_pos != -1
     assert enabled_pos != -1
     assert tags_pos != -1
     assert partition_pos != -1
-    
+
     # Check order: materialized < enabled < tags < partition_by
     assert materialized_pos < enabled_pos
     assert enabled_pos < tags_pos
     assert tags_pos < partition_pos
+
+
+def test_update_column_list_with_field_mappings():
+    # Test field mappings work correctly
+    columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {
+            "name": "secondaryLocation",
+            "type": "STRING",
+            "description": "Secondary location",
+        },
+        {
+            "name": "originalPrimaryLocation",
+            "type": "STRING",
+            "description": "Original primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    field_mappings = {
+        "primaryLocation": "primary_location",
+        "secondaryLocation": "secondary_location",
+        "originalPrimaryLocation": "original_primary_location",
+    }
+
+    result = update_column_list(
+        columns, exclude_columns=[], field_mappings=field_mappings
+    )
+
+    expected_columns = [
+        {
+            "name": "primary_location",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {
+            "name": "secondary_location",
+            "type": "STRING",
+            "description": "Secondary location",
+        },
+        {
+            "name": "original_primary_location",
+            "type": "STRING",
+            "description": "Original primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    assert result == expected_columns
+
+
+def test_update_column_list_with_field_mappings_and_exclusions():
+    # Test field mappings work with column exclusions
+    columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "excludeMe", "type": "STRING", "description": "Column to exclude"},
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    field_mappings = {
+        "primaryLocation": "primary_location",
+    }
+
+    exclude_columns = ["excludeme"]  # Note: exclusion is case-insensitive
+
+    result = update_column_list(
+        columns, exclude_columns=exclude_columns, field_mappings=field_mappings
+    )
+
+    expected_columns = [
+        {
+            "name": "primary_location",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    assert result == expected_columns
+
+
+def test_update_column_list_with_field_mappings_and_struct_columns():
+    # Test field mappings work with struct columns (nested columns)
+    columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {
+            "name": "struct_col.sub1",
+            "type": "STRING",
+            "description": "Struct subcolumn 1",
+        },
+        {
+            "name": "struct_col.sub2",
+            "type": "INTEGER",
+            "description": "Struct subcolumn 2",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    field_mappings = {
+        "primaryLocation": "primary_location",
+    }
+
+    result = update_column_list(
+        columns, exclude_columns=[], field_mappings=field_mappings
+    )
+
+    expected_columns = [
+        {
+            "name": "primary_location",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "struct_col",
+            "type": "RECORD",
+            "description": "struct_col.sub1 : Struct subcolumn 1\nstruct_col.sub2 : Struct subcolumn 2",
+        },
+    ]
+
+    assert result == expected_columns
+
+
+def test_update_column_list_field_mappings_none():
+    # Test that None field_mappings parameter works correctly (backward compatibility)
+    columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    result = update_column_list(columns, exclude_columns=[], field_mappings=None)
+
+    # Without field mappings, column names should remain unchanged
+    expected_columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    assert result == expected_columns
+
+
+def test_update_column_list_field_mappings_empty():
+    # Test that empty field_mappings dict works correctly
+    columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    result = update_column_list(columns, exclude_columns=[], field_mappings={})
+
+    # With empty field mappings, column names should remain unchanged
+    expected_columns = [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    assert result == expected_columns

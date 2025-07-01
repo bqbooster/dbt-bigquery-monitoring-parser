@@ -27,15 +27,19 @@ def parse_table_name(soup):
     return table_name
 
 
-
 # check if the page contains `[PROJECT_ID.]` presence
 def parse_has_project_id_scope(soup):
     has_project_id = False
     # Search in all text content of the page
     page_text = soup.get_text()
-    if "[PROJECT_ID.]" in page_text or "[`PROJECT_ID`.]" in page_text or "PROJECT_ID" in page_text:
+    if (
+        "[PROJECT_ID.]" in page_text
+        or "[`PROJECT_ID`.]" in page_text
+        or "PROJECT_ID" in page_text
+    ):
         has_project_id = True
     return has_project_id
+
 
 def parse_required_role(soup):
     required_role = None
@@ -56,17 +60,18 @@ def parse_required_role(soup):
             break
     return required_role
 
+
 def extract_partitioning_key(soup):
     partitioning_key = None
     clustering_columns = []
     partitioning_mentioned = False
     clustering_mentioned = False
-    
+
     # Find all paragraphs and aside notes that might contain partitioning and clustering info
-    for element in soup.find_all(['p', 'aside']):
+    for element in soup.find_all(["p", "aside"]):
         # For aside elements, we need to look within span tags too
-        if element.name == 'aside':
-            spans = element.find_all('span')
+        if element.name == "aside":
+            spans = element.find_all("span")
             if spans:
                 # Use the spans for processing
                 elements_to_process = spans
@@ -76,84 +81,111 @@ def extract_partitioning_key(soup):
         else:
             # For paragraph elements, use the element itself
             elements_to_process = [element]
-        
+
         for elem in elements_to_process:
             element_text = elem.get_text()
             element_html = str(elem)
-            
+
             # Check if partitioning is mentioned
-            if 'partitioned by' in element_text:
+            if "partitioned by" in element_text:
                 partitioning_mentioned = True
                 # Extract partitioning key
-                partitioning_match = re.search(r'partitioned by the <code[^>]*>([^<]+)</code>', element_html)
+                partitioning_match = re.search(
+                    r"partitioned by the <code[^>]*>([^<]+)</code>", element_html
+                )
                 if partitioning_match:
                     partitioning_key = partitioning_match.group(1)
-            
+
             # Check if clustering is mentioned
-            if 'clustered by' in element_text:
+            if "clustered by" in element_text:
                 clustering_mentioned = True
-                
+
                 # Extract all code tags
-                code_tags = elem.find_all('code')
+                code_tags = elem.find_all("code")
                 code_texts = [tag.get_text() for tag in code_tags]
-                
+
                 # For single clustering column case (no partitioning)
                 if not partitioning_key and len(code_texts) == 1:
                     clustering_columns = code_texts
                     continue
-                
+
                 # Find clustering columns (all code tags except the partitioning key)
                 if partitioning_key in code_texts:
                     code_texts.remove(partitioning_key)
                     clustering_columns = code_texts
                     continue
-                
+
                 # Only use code tags that appear after "clustered by" text
                 for i, tag in enumerate(code_tags):
                     if tag.get_text() == partitioning_key:
                         # Any code tags after the partitioning key are likely clustering columns
-                        clustering_columns = [code.get_text() for code in code_tags[i+1:]]
+                        clustering_columns = [
+                            code.get_text() for code in code_tags[i + 1 :]
+                        ]
                         break
-    
+
     # If we still don't have clustering columns but found code tags after "clustered by"
     if not clustering_columns and clustering_mentioned:
         # Try a more direct pattern match
-        for element in soup.find_all(['p', 'aside', 'span']):
+        for element in soup.find_all(["p", "aside", "span"]):
             element_html = str(element)
-            if 'clustered by' in element_html:
+            if "clustered by" in element_html:
                 # Pattern for two clustering columns
-                two_col_match = re.search(r'clustered by <code[^>]*>([^<]+)</code> and <code[^>]*>([^<]+)</code>', element_html)
+                two_col_match = re.search(
+                    r"clustered by <code[^>]*>([^<]+)</code> and <code[^>]*>([^<]+)</code>",
+                    element_html,
+                )
                 if two_col_match:
-                    clustering_columns = [two_col_match.group(1), two_col_match.group(2)]
+                    clustering_columns = [
+                        two_col_match.group(1),
+                        two_col_match.group(2),
+                    ]
                     break
                 else:
                     # Pattern for a single clustering column
-                    one_col_match = re.search(r'clustered by <code[^>]*>([^<]+)</code>', element_html)
+                    one_col_match = re.search(
+                        r"clustered by <code[^>]*>([^<]+)</code>", element_html
+                    )
                     if one_col_match:
                         clustering_columns = [one_col_match.group(1)]
                         break
-    
+
     # For the specific test cases - direct pattern match
     html_str = str(soup)
-    if 'creation_time' in html_str and 'project_id' in html_str and 'user_email' in html_str:
-        if partitioning_key == 'creation_time' and not clustering_columns:
-            clustering_columns = ['project_id', 'user_email']
-    
-    if 'job_creation_time' in html_str and 'project_id' in html_str and 'user_email' in html_str:
-        if partitioning_key == 'job_creation_time' and not clustering_columns:
-            clustering_columns = ['project_id', 'user_email']
-    
+    if (
+        "creation_time" in html_str
+        and "project_id" in html_str
+        and "user_email" in html_str
+    ):
+        if partitioning_key == "creation_time" and not clustering_columns:
+            clustering_columns = ["project_id", "user_email"]
+
+    if (
+        "job_creation_time" in html_str
+        and "project_id" in html_str
+        and "user_email" in html_str
+    ):
+        if partitioning_key == "job_creation_time" and not clustering_columns:
+            clustering_columns = ["project_id", "user_email"]
+
     # Raise an error if partitioning is mentioned but we couldn't extract a key
     if partitioning_mentioned and partitioning_key is None:
-        raise ValueError("Partitioning is mentioned but no partitioning key could be extracted")
-    
+        raise ValueError(
+            "Partitioning is mentioned but no partitioning key could be extracted"
+        )
+
     # Raise an error if clustering is mentioned but we couldn't extract any columns
     if clustering_mentioned and not clustering_columns:
-        raise ValueError("Clustering is mentioned but no clustering columns could be extracted")
-    
+        raise ValueError(
+            "Clustering is mentioned but no clustering columns could be extracted"
+        )
+
     return partitioning_key, clustering_columns
 
-def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
+
+def update_column_list(
+    input_columns: List[dict], exclude_columns: List[str], field_mappings: dict = None
+):
     # Remove the columns that are in the exclude_columns list
     columns = [
         column
@@ -166,6 +198,12 @@ def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
 
     # Remove the struct columns from the columns list
     columns = [column for column in columns if column not in struct_columns]
+
+    # Apply field mappings if provided
+    if field_mappings:
+        for column in columns:
+            if column["name"] in field_mappings:
+                column["name"] = field_mappings[column["name"]]
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -193,9 +231,18 @@ def update_column_list(input_columns: List[dict], exclude_columns: List[str]):
 
     return columns
 
+
 def generate_files(
-    filename: str, dir: str, url: str,
-    exclude_columns: List[str], override_table_name: str, type: str, materialization: str = None, enabled: bool = None, tags: List[str] = None
+    filename: str,
+    dir: str,
+    url: str,
+    exclude_columns: List[str],
+    override_table_name: str,
+    type: str,
+    materialization: str = None,
+    enabled: bool = None,
+    tags: List[str] = None,
+    field_mappings: dict = None,
 ):
     # Fetch the HTML content from the URL
     response = requests.get(url)
@@ -244,7 +291,7 @@ def generate_files(
         columns.append(column_info)
 
     # Update the column list
-    columns = update_column_list(columns, exclude_columns)
+    columns = update_column_list(columns, exclude_columns, field_mappings)
 
     model_name = f"information_schema_{filename.lower()}"
 
@@ -282,17 +329,28 @@ def generate_files(
         {
             "name": column["name"],
             "description": column["description"],
-            "data_type": column["type"]
+            "data_type": column["type"],
         }
         for column in columns
     ]
-    
+
     # Create the SQL file
     with open(filename_sql, "w") as f:
-        sql_file_content = generate_sql(url, columns_for_sql, table_name, required_role_str, sql_type, has_project_id_scope, partitioning_key, materialization, enabled, tags)
+        sql_file_content = generate_sql(
+            url,
+            columns_for_sql,
+            table_name,
+            required_role_str,
+            sql_type,
+            has_project_id_scope,
+            partitioning_key,
+            materialization,
+            enabled,
+            tags,
+        )
         # Ensure the SQL content ends with a newline
-        if not sql_file_content.endswith('\n'):
-            sql_file_content += '\n'
+        if not sql_file_content.endswith("\n"):
+            sql_file_content += "\n"
         f.write(sql_file_content)
 
     print(f"Files '{filename_sql}' and '{filename_yml}' have been created.")
@@ -301,11 +359,11 @@ def generate_files(
 def generate_yml(model_name: str, columns: List[dict]) -> str:
     """
     Generate YAML content for a dbt model with proper 4-space indentation.
-    
+
     Args:
         model_name: The name of the model
         columns: List of column dictionaries with 'name', 'description', and 'type' keys
-    
+
     Returns:
         Formatted YAML string with 4-space indentation
     """
@@ -318,14 +376,14 @@ def generate_yml(model_name: str, columns: List[dict]) -> str:
                     {
                         "name": column["name"],
                         "description": column["description"],
-                        "data_type": column.get("data_type", column.get("type"))
+                        "data_type": column.get("data_type", column.get("type")),
                     }
                     for column in columns
                 ],
             }
         ],
     }
-    
+
     # Use yaml.dump with proper indentation and formatting
     return yaml.dump(yaml_data, sort_keys=False, default_flow_style=False, indent=2)
 
@@ -342,6 +400,7 @@ def generate_all():
             target.get("materialization"),
             target.get("enabled"),
             target.get("tags"),
+            target.get("field_mappings"),
         )
 
 
@@ -358,6 +417,7 @@ def generate_for_key(key: str):
             target.get("materialization"),
             target.get("enabled"),
             target.get("tags"),
+            target.get("field_mappings"),
         )
     else:
         print(f"Error: Could not find key {key} in the pages_to_process dictionary.")
