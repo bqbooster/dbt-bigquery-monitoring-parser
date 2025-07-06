@@ -18,7 +18,7 @@ def generate_sql_for_dataset(
 {{% set preflight_sql -%}}
 SELECT
 CONCAT('`', CATALOG_NAME, '`.`', SCHEMA_NAME, '`') AS SCHEMA_NAME
-FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
+FROM `region-{{{{ dbt_bigquery_monitoring_variable_bq_region() }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
 {{%- endset %}}
 {{% set results = run_query(preflight_sql) %}}
 {{% set dataset_list = results | map(attribute='SCHEMA_NAME') | list %}}
@@ -109,7 +109,7 @@ def generate_sql_for_table(
 {required_role_str}
 SELECT
 {columns_str}
-FROM `region-{{{{ var('bq_region') }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
+FROM `region-{{{{ dbt_bigquery_monitoring_variable_bq_region() }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
 
     # Add config block if we have project scoping, custom materialization, enabled, or tags
     if has_project_id_scope or materialization or enabled is not None or tags:
