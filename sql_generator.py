@@ -54,6 +54,7 @@ WITH base AS (
 {{% endfor %}}
 {{%- endif -%}}
 )
+
 SELECT
 {columns_str}
 FROM

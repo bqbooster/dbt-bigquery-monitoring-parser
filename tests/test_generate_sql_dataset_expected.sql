@@ -28,6 +28,7 @@ field3
 {% endfor %}
 {%- endif -%}
 )
+
 SELECT
 field1,
 field2,

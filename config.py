@@ -110,6 +110,8 @@ pages_to_process = {
         ],
     },
     "jobs_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-organization",
         "exclude_columns": [
@@ -151,6 +153,8 @@ pages_to_process = {
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-folder",
     },
     "jobs_timeline_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-organization",
     },
@@ -164,6 +168,8 @@ pages_to_process = {
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations",
     },
     "recommendations_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations-by-org",
     },
@@ -231,6 +237,25 @@ pages_to_process = {
         "dir": "search_indexes",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-index-columns",
     },
+    "search_index_column_options": {
+        "type": "dataset",
+        "dir": "search_indexes",
+        "field_mappings": {
+            "column_name": "index_column_name",
+        },
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-index-column-options",
+    },
+    "search_index_options": {
+        "type": "dataset",
+        "dir": "search_indexes",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-index-options",
+    },
+    "search_indexes_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
+        "dir": "search_indexes",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-indexes-by-organization",
+    },
     # sessions
     "sessions_by_project": {
         "dir": "sessions",
@@ -253,6 +278,8 @@ pages_to_process = {
         "url": "https://cloud.google.com/bigquery/docs/information-schema-streaming-by-folder",
     },
     "streaming_timeline_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "streaming",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-streaming-by-organization",
     },
@@ -301,7 +328,15 @@ pages_to_process = {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage",
     },
+    "table_storage_by_folder": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-folder"],
+        "enabled": False,
+        "dir": "tables",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage-by-folder",
+    },
     "table_storage_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage-by-organization",
     },
@@ -309,7 +344,15 @@ pages_to_process = {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage-usage",
     },
+    "table_storage_usage_timeline_by_folder": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-folder"],
+        "enabled": False,
+        "dir": "tables",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage-usage-by-folder",
+    },
     "table_storage_usage_timeline_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-table-storage-usage-by-organization",
     },
@@ -347,6 +390,8 @@ pages_to_process = {
         "url": "https://cloud.google.com/bigquery/docs/information-schema-write-api-by-folder",
     },
     "write_api_timeline_by_organization": {
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
+        "enabled": False,
         "dir": "write_api",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-write-api-by-organization",
     },
