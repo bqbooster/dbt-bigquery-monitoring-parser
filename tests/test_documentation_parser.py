@@ -246,7 +246,7 @@ def test_generate_sql_dataset():
     )
     with open(TESTS_DIR / "test_generate_sql_dataset_expected.sql", "r") as file:
         expected = file.read()
-        assert result == expected
+    assert result == expected
 
 
 def test_extract_partitioning_key():

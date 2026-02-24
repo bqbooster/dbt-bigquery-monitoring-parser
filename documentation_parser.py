@@ -9,6 +9,13 @@ from config import pages_to_process
 from sql_generator import generate_sql
 
 
+def format_data_type(raw_type: str) -> str:
+    if "REPEATED" in raw_type:
+        inner_type = raw_type.replace("REPEATED", "").strip()
+        return f"ARRAY<{inner_type}>"
+    return raw_type
+
+
 def parse_table_name(soup):
     table_name = None
     for td_tag in soup.find_all("td"):
@@ -285,7 +292,7 @@ def generate_files(
         cols = row.find_all("td")
         column_info = {
             "name": cols[0].text.strip().replace("\n", "").replace("_<wbr>", "_"),
-            "type": cols[1].text.strip(),
+            "type": format_data_type(cols[1].text.strip()),
             "description": cols[2].text.strip(),
         }
         columns.append(column_info)
@@ -376,7 +383,7 @@ def generate_yml(model_name: str, columns: List[dict]) -> str:
                     {
                         "name": column["name"],
                         "description": column["description"],
-                        "data_type": column.get("data_type", column.get("type")),
+                        "data_type": format_data_type(column.get("data_type", column.get("type"))),
                     }
                     for column in columns
                 ],

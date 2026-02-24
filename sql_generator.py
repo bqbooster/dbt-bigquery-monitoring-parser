@@ -14,18 +14,7 @@ def generate_sql_for_dataset(
     tags: List[str] = None,
 ):
     # Prepare a run_query statement to fetch datasets for the list of projects
-    preflight_sql = textwrap.dedent(f"""
-{{% set preflight_sql -%}}
-SELECT
-CONCAT('`', CATALOG_NAME, '`.`', SCHEMA_NAME, '`') AS SCHEMA_NAME
-FROM `region-{{{{ dbt_bigquery_monitoring_variable_bq_region() }}}}`.`INFORMATION_SCHEMA`.`SCHEMATA`
-{{%- endset %}}
-{{% set results = run_query(preflight_sql) %}}
-{{% set dataset_list = results | map(attribute='SCHEMA_NAME') | list %}}
-{{%- if dataset_list | length == 0 -%}}
-{{{{ log("No datasets found in the project list", info=False) }}}}
-{{%- endif -%}}
-""")
+    preflight_sql = "{% set dataset_list = get_dataset_list() %}"
 
     # Prepare the column names as a comma-separated string
     column_names = [column["name"].lower() for column in columns]
@@ -40,7 +29,9 @@ FROM `region-{{{{ dbt_bigquery_monitoring_variable_bq_region() }}}}`.`INFORMATIO
 
     sql = textwrap.dedent(f"""{{# More details about base table in {url} -#}}
 {required_role_str}
+
 {preflight_sql}
+
 WITH base AS (
 {{%- if dataset_list | length == 0 -%}}
   SELECT {columns_with_empty_values_str}
