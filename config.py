@@ -71,6 +71,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_by_project": {
@@ -83,6 +84,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_by_user": {
@@ -94,6 +96,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_by_folder": {
@@ -107,6 +110,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_by_organization": {
@@ -121,6 +125,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     # jobs timeline
@@ -133,6 +138,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_timeline_by_user": {
@@ -144,6 +150,7 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
         ],
     },
     "jobs_timeline_by_folder": {
@@ -311,6 +318,7 @@ pages_to_process = {
     "tables": {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-tables",
+        "exclude_columns": ["managed_table_type"],
     },
     "table_options": {
         "dir": "tables",
