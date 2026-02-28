@@ -52,6 +52,10 @@ pages_to_process = {
     "shared_dataset_usage": {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-shared-dataset-usage",
+        "experimental_columns": ["job_principal_subject"],
+        "experimental_variable_overrides": {
+            "job_principal_subject": "principal_subject",
+        },
     },
     "schemata_replicas": {
         "dir": "datasets",
@@ -228,6 +232,7 @@ pages_to_process = {
             "secondaryLocation": "secondary_location",
             "originalPrimaryLocation": "original_primary_location",
         },
+        "experimental_columns": ["reservation_group_path"],
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservations",
     },
@@ -237,10 +242,12 @@ pages_to_process = {
             "secondaryLocation": "secondary_location",
             "originalPrimaryLocation": "original_primary_location",
         },
+        "experimental_columns": ["reservation_group_path"],
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-changes",
     },
     "reservations_timeline": {
+        "experimental_columns": ["reservation_group_path"],
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-timeline",
     },
