@@ -383,6 +383,46 @@ def test_build_columns_with_empty_values_uses_jinja_var_override_for_experimenta
     )
 
 
+@pytest.mark.parametrize("jinja_var", [None, ""])
+def test_build_columns_str_falls_back_to_column_name_when_jinja_var_empty_or_none(
+    jinja_var,
+):
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": jinja_var,
+        },
+    ]
+
+    result = build_columns_str(columns)
+
+    assert "dbt_bigquery_monitoring_variable_enable_job_principal_subject()" in result
+    assert "dbt_bigquery_monitoring_variable_enable_None()" not in result
+
+
+@pytest.mark.parametrize("jinja_var", [None, ""])
+def test_build_columns_with_empty_values_falls_back_to_column_name_when_jinja_var_empty_or_none(
+    jinja_var,
+):
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": jinja_var,
+        },
+    ]
+
+    result = build_columns_with_empty_values(columns)
+
+    assert "dbt_bigquery_monitoring_variable_enable_job_principal_subject()" in result
+    assert "dbt_bigquery_monitoring_variable_enable_None()" not in result
+
+
 def test_build_columns_str_keeps_valid_commas_when_experimental_is_in_middle():
     columns = [
         {"name": "field1", "data_type": "STRING"},

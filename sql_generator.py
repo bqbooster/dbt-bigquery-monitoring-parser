@@ -11,7 +11,7 @@ def build_columns_str(columns: List[dict]) -> str:
         column_names.append("{%- set has_columns = namespace(value=false) %}")
         for column in columns:
             column_name = column["name"].lower()
-            jinja_var_name = column.get("jinja_var", column_name)
+            jinja_var_name = column.get("jinja_var") or column_name
             jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             column_names.append(
                 f"{{%- if {jinja_var} %}}"
@@ -28,7 +28,7 @@ def build_columns_str(columns: List[dict]) -> str:
     for index, column in enumerate(columns):
         column_name = column["name"].lower()
         if column.get("experimental"):
-            jinja_var_name = column.get("jinja_var", column_name)
+            jinja_var_name = column.get("jinja_var") or column_name
             jinja_var = (
                 f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             )
@@ -61,7 +61,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
             empty_column = (
                 f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
             )
-            jinja_var_name = column.get("jinja_var", column["name"].lower())
+            jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             empty_columns.append(
                 f"{{%- if {jinja_var} %}}"
@@ -78,7 +78,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     for index, column in enumerate(columns):
         empty_column = f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
         if column.get("experimental"):
-            jinja_var_name = column.get("jinja_var", column["name"].lower())
+            jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = (
                 f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             )
