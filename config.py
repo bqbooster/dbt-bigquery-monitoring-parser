@@ -70,6 +70,7 @@ pages_to_process = {
     "jobs": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -84,6 +85,7 @@ pages_to_process = {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
         "override_table_name": "JOBS_BY_PROJECT",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -97,6 +99,7 @@ pages_to_process = {
     "jobs_by_user": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-user",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -112,6 +115,7 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-folder",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -127,6 +131,7 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-organization",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query",
             "query_info.resource_warning",
@@ -371,7 +376,8 @@ pages_to_process = {
     "tables": {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-tables",
-        "exclude_columns": ["managed_table_type"],
+        "column_selection_macro": True,
+        "experimental_columns": ["managed_table_type"],
     },
     "table_options": {
         "dir": "tables",

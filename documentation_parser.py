@@ -300,6 +300,7 @@ def generate_files(
     field_mappings: dict = None,
     experimental_variable_overrides: dict = None,
     type_overrides: dict = None,
+    column_selection_macro: bool = False,
 ):
     # Fetch the HTML content from the URL
     response = requests.get(url)
@@ -394,6 +395,8 @@ def generate_files(
             "name": column["name"],
             "description": column["description"],
             "data_type": column["type"],
+            "experimental": column.get("experimental", False),
+            "jinja_var": column.get("jinja_var"),
         }
         for column in columns
     ]
@@ -411,6 +414,7 @@ def generate_files(
             materialization,
             enabled,
             tags,
+            column_selection_macro,
         )
         # Ensure the SQL content ends with a newline
         if not sql_file_content.endswith("\n"):
@@ -468,6 +472,7 @@ def generate_all():
             target.get("field_mappings"),
             target.get("experimental_variable_overrides"),
             target.get("type_overrides"),
+            target.get("column_selection_macro", False),
         )
 
 
@@ -488,6 +493,7 @@ def generate_for_key(key: str):
             target.get("field_mappings"),
             target.get("experimental_variable_overrides"),
             target.get("type_overrides"),
+            target.get("column_selection_macro", False),
         )
     else:
         print(f"Error: Could not find key {key} in the pages_to_process dictionary.")
