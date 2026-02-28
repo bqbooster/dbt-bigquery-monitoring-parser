@@ -196,24 +196,27 @@ def update_column_list(
     field_mappings: dict = None,
     type_overrides: dict = None,
 ):
-    # Remove the columns that are in the exclude_columns list
-    columns = [
-        column
-        for column in input_columns
-        if column["name"].lower() not in (exclude_columns or [])
-    ]
+    excluded_column_names = {column_name.lower() for column_name in (exclude_columns or [])}
 
     # Extract all columns that are structures (as containing ".") and remove them from the columns list
     struct_columns = [column for column in input_columns if "." in column["name"]]
 
-    # Remove the struct columns from the columns list
-    columns = [column for column in columns if column not in struct_columns]
+    # Remove excluded and struct columns, and copy dicts to avoid mutating input columns
+    columns = [
+        column.copy()
+        for column in input_columns
+        if column["name"].lower() not in excluded_column_names and "." not in column["name"]
+    ]
 
     # Apply field mappings if provided
     if field_mappings:
+        normalized_field_mappings = {
+            column_name.lower(): renamed_column
+            for column_name, renamed_column in field_mappings.items()
+        }
         for column in columns:
-            if column["name"] in field_mappings:
-                column["name"] = field_mappings[column["name"]]
+            if column["name"].lower() in normalized_field_mappings:
+                column["name"] = normalized_field_mappings[column["name"].lower()]
 
     # Apply type overrides if provided (case-insensitive on column names)
     if type_overrides:

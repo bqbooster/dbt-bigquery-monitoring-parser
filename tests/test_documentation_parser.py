@@ -902,6 +902,56 @@ def test_update_column_list_field_mappings_empty():
     assert result == expected_columns
 
 
+def test_update_column_list_with_field_mappings_case_insensitive():
+    columns = [
+        {"name": "PrimaryLocation", "type": "STRING", "description": "Primary location"},
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        field_mappings={"primarylocation": "primary_location"},
+    )
+
+    assert result == [
+        {
+            "name": "primary_location",
+            "type": "STRING",
+            "description": "Primary location",
+        },
+        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+    ]
+
+
+def test_update_column_list_does_not_mutate_input_columns():
+    columns = [
+        {"name": "primaryLocation", "type": "STRING", "description": "Primary location"},
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        field_mappings={"PRIMARYLOCATION": "primary_location"},
+        type_overrides={"PRIMARY_LOCATION": "GEOGRAPHY"},
+    )
+
+    assert columns == [
+        {
+            "name": "primaryLocation",
+            "type": "STRING",
+            "description": "Primary location",
+        }
+    ]
+    assert result == [
+        {
+            "name": "primary_location",
+            "type": "GEOGRAPHY",
+            "description": "Primary location",
+        }
+    ]
+
+
 def test_update_column_list_with_type_overrides_case_insensitive():
     columns = [
         {"name": "columnOne", "type": "STRING", "description": "Column one"},
