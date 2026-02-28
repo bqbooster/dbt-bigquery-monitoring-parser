@@ -2,6 +2,7 @@ import pytest
 import sys
 import os
 from pathlib import Path
+import documentation_parser
 
 # Add the parent directory to the Python path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -899,3 +900,93 @@ def test_update_column_list_field_mappings_empty():
     ]
 
     assert result == expected_columns
+
+
+def test_update_column_list_with_type_overrides_case_insensitive():
+    columns = [
+        {"name": "columnOne", "type": "STRING", "description": "Column one"},
+        {"name": "columnTwo", "type": "INTEGER", "description": "Column two"},
+    ]
+
+    type_overrides = {
+        "COLUMNONE": "BYTES",
+        "columntwo": "NUMERIC",
+    }
+
+    result = update_column_list(columns, exclude_columns=[], type_overrides=type_overrides)
+
+    assert result == [
+        {"name": "columnOne", "type": "BYTES", "description": "Column one"},
+        {"name": "columnTwo", "type": "NUMERIC", "description": "Column two"},
+    ]
+
+
+def test_update_column_list_with_type_overrides_after_field_mappings():
+    columns = [
+        {"name": "primaryLocation", "type": "STRING", "description": "Primary location"},
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        field_mappings={"primaryLocation": "primary_location"},
+        type_overrides={"PRIMARY_LOCATION": "GEOGRAPHY"},
+    )
+
+    assert result == [
+        {
+            "name": "primary_location",
+            "type": "GEOGRAPHY",
+            "description": "Primary location",
+        }
+    ]
+
+
+def test_generate_all_passes_type_overrides(monkeypatch):
+    captured_calls = []
+
+    def fake_generate_files(*args):
+        captured_calls.append(args)
+
+    monkeypatch.setattr(
+        documentation_parser,
+        "pages_to_process",
+        {
+            "test_key": {
+                "dir": "test_dir",
+                "url": "https://example.com",
+                "type_overrides": {"column_name": "NUMERIC"},
+            }
+        },
+    )
+    monkeypatch.setattr(documentation_parser, "generate_files", fake_generate_files)
+
+    documentation_parser.generate_all()
+
+    assert len(captured_calls) == 1
+    assert captured_calls[0][-1] == {"column_name": "NUMERIC"}
+
+
+def test_generate_for_key_passes_type_overrides(monkeypatch):
+    captured_calls = []
+
+    def fake_generate_files(*args):
+        captured_calls.append(args)
+
+    monkeypatch.setattr(
+        documentation_parser,
+        "pages_to_process",
+        {
+            "test_key": {
+                "dir": "test_dir",
+                "url": "https://example.com",
+                "type_overrides": {"column_name": "BIGNUMERIC"},
+            }
+        },
+    )
+    monkeypatch.setattr(documentation_parser, "generate_files", fake_generate_files)
+
+    documentation_parser.generate_for_key("test_key")
+
+    assert len(captured_calls) == 1
+    assert captured_calls[0][-1] == {"column_name": "BIGNUMERIC"}

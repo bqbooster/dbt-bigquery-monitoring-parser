@@ -191,7 +191,10 @@ def extract_partitioning_key(soup):
 
 
 def update_column_list(
-    input_columns: List[dict], exclude_columns: List[str], field_mappings: dict = None
+    input_columns: List[dict],
+    exclude_columns: List[str],
+    field_mappings: dict = None,
+    type_overrides: dict = None,
 ):
     # Remove the columns that are in the exclude_columns list
     columns = [
@@ -211,6 +214,16 @@ def update_column_list(
         for column in columns:
             if column["name"] in field_mappings:
                 column["name"] = field_mappings[column["name"]]
+
+    # Apply type overrides if provided (case-insensitive on column names)
+    if type_overrides:
+        normalized_overrides = {
+            column_name.lower(): data_type
+            for column_name, data_type in type_overrides.items()
+        }
+        for column in columns:
+            if column["name"].lower() in normalized_overrides:
+                column["type"] = normalized_overrides[column["name"].lower()]
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -250,6 +263,7 @@ def generate_files(
     enabled: bool = None,
     tags: List[str] = None,
     field_mappings: dict = None,
+    type_overrides: dict = None,
 ):
     # Fetch the HTML content from the URL
     response = requests.get(url)
@@ -298,7 +312,9 @@ def generate_files(
         columns.append(column_info)
 
     # Update the column list
-    columns = update_column_list(columns, exclude_columns, field_mappings)
+    columns = update_column_list(
+        columns, exclude_columns, field_mappings, type_overrides
+    )
 
     model_name = f"information_schema_{filename.lower()}"
 
@@ -408,6 +424,7 @@ def generate_all():
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("type_overrides"),
         )
 
 
@@ -425,6 +442,7 @@ def generate_for_key(key: str):
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("type_overrides"),
         )
     else:
         print(f"Error: Could not find key {key} in the pages_to_process dictionary.")
