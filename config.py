@@ -48,6 +48,7 @@ pages_to_process = {
     "schemata_links": {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-datasets-schemata-links",
+        "type_overrides": {"linked_schema_catalog_number": "INT64"},
     },
     "shared_dataset_usage": {
         "dir": "datasets",
@@ -141,6 +142,7 @@ pages_to_process = {
     "jobs_timeline": {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -154,6 +156,7 @@ pages_to_process = {
     "jobs_timeline_by_user": {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-user",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -169,6 +172,7 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-folder",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -184,6 +188,7 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-organization",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
@@ -198,16 +203,28 @@ pages_to_process = {
     "insights": {
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-insights",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_recommendation_ids": "ARRAY<STRING>",
+        },
     },
     "recommendations": {
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_insight_ids": "ARRAY<STRING>",
+        },
     },
     "recommendations_by_organization": {
         "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
         "enabled": False,
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations-by-org",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_insight_ids": "ARRAY<STRING>",
+        },
     },
     # reservations
     "assignments": {
@@ -233,6 +250,7 @@ pages_to_process = {
             "originalPrimaryLocation": "original_primary_location",
         },
         "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservations",
     },
@@ -243,11 +261,13 @@ pages_to_process = {
             "originalPrimaryLocation": "original_primary_location",
         },
         "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-changes",
     },
     "reservations_timeline": {
         "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-timeline",
     },
@@ -255,6 +275,7 @@ pages_to_process = {
     "parameters": {
         "dir": "routines",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-parameters",
+        "type_overrides": {"ordinal_position": "INT64"},
     },
     "routines": {
         "dir": "routines",
