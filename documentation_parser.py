@@ -9,6 +9,13 @@ from config import pages_to_process
 from sql_generator import generate_sql
 
 
+def format_data_type(raw_type: str) -> str:
+    if "REPEATED" in raw_type:
+        inner_type = raw_type.replace("REPEATED", "").strip()
+        return f"ARRAY<{inner_type}>"
+    return raw_type
+
+
 def parse_table_name(soup):
     table_name = None
     for td_tag in soup.find_all("td"):
@@ -184,26 +191,57 @@ def extract_partitioning_key(soup):
 
 
 def update_column_list(
-    input_columns: List[dict], exclude_columns: List[str], field_mappings: dict = None
+    input_columns: List[dict],
+    exclude_columns: List[str],
+    experimental_columns: List[str] = None,
+    field_mappings: dict = None,
+    experimental_variable_overrides: dict = None,
+    type_overrides: dict = None,
 ):
-    # Remove the columns that are in the exclude_columns list
-    columns = [
-        column
-        for column in input_columns
-        if column["name"].lower() not in (exclude_columns or [])
-    ]
+    excluded_column_names = {column_name.lower() for column_name in (exclude_columns or [])}
+    experimental_column_names = {
+        column_name.lower() for column_name in (experimental_columns or [])
+    }
 
     # Extract all columns that are structures (as containing ".") and remove them from the columns list
     struct_columns = [column for column in input_columns if "." in column["name"]]
 
-    # Remove the struct columns from the columns list
-    columns = [column for column in columns if column not in struct_columns]
+    # Remove excluded and struct columns, and copy dicts to avoid mutating input columns
+    columns = []
+    for column in input_columns:
+        if column["name"].lower() in excluded_column_names or "." in column["name"]:
+            continue
+        copied_column = column.copy()
+        copied_column["_original_name"] = copied_column["name"]
+        copied_column["experimental"] = (
+            copied_column["name"].lower() in experimental_column_names
+        )
+        columns.append(copied_column)
 
     # Apply field mappings if provided
     if field_mappings:
+        normalized_field_mappings = {
+            column_name.lower(): renamed_column
+            for column_name, renamed_column in field_mappings.items()
+        }
         for column in columns:
-            if column["name"] in field_mappings:
-                column["name"] = field_mappings[column["name"]]
+            if column["name"].lower() in normalized_field_mappings:
+                column["name"] = normalized_field_mappings[column["name"].lower()]
+
+    # Apply type overrides if provided (case-insensitive on column names)
+    if type_overrides:
+        normalized_overrides = {
+            column_name.lower(): data_type
+            for column_name, data_type in type_overrides.items()
+        }
+        for column in columns:
+            if column["name"].lower() in normalized_overrides:
+                column["type"] = normalized_overrides[column["name"].lower()]
+
+    normalized_variable_overrides = {
+        column_name.lower(): variable_name
+        for column_name, variable_name in (experimental_variable_overrides or {}).items()
+    }
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -224,10 +262,26 @@ def update_column_list(
         columns.append(
             {
                 "name": struct_column_name,
+                "_original_name": struct_column_name,
                 "type": "RECORD",
                 "description": struct_column_description.strip(),
+                "experimental": struct_column_name.lower() in experimental_column_names,
             }
         )
+
+    for column in columns:
+        if not column.get("experimental"):
+            continue
+        override_value = normalized_variable_overrides.get(column["name"].lower()) or (
+            normalized_variable_overrides.get(column["_original_name"].lower())
+            if column.get("_original_name")
+            else None
+        )
+        if override_value:
+            column["jinja_var"] = override_value
+
+    for column in columns:
+        column.pop("_original_name", None)
 
     return columns
 
@@ -237,12 +291,16 @@ def generate_files(
     dir: str,
     url: str,
     exclude_columns: List[str],
+    experimental_columns: List[str],
     override_table_name: str,
     type: str,
     materialization: str = None,
     enabled: bool = None,
     tags: List[str] = None,
     field_mappings: dict = None,
+    experimental_variable_overrides: dict = None,
+    type_overrides: dict = None,
+    column_selection_macro: bool = False,
 ):
     # Fetch the HTML content from the URL
     response = requests.get(url)
@@ -285,13 +343,20 @@ def generate_files(
         cols = row.find_all("td")
         column_info = {
             "name": cols[0].text.strip().replace("\n", "").replace("_<wbr>", "_"),
-            "type": cols[1].text.strip(),
+            "type": format_data_type(cols[1].text.strip()),
             "description": cols[2].text.strip(),
         }
         columns.append(column_info)
 
     # Update the column list
-    columns = update_column_list(columns, exclude_columns, field_mappings)
+    columns = update_column_list(
+        columns,
+        exclude_columns,
+        experimental_columns,
+        field_mappings,
+        experimental_variable_overrides,
+        type_overrides,
+    )
 
     model_name = f"information_schema_{filename.lower()}"
 
@@ -330,6 +395,8 @@ def generate_files(
             "name": column["name"],
             "description": column["description"],
             "data_type": column["type"],
+            "experimental": column.get("experimental", False),
+            "jinja_var": column.get("jinja_var"),
         }
         for column in columns
     ]
@@ -347,6 +414,7 @@ def generate_files(
             materialization,
             enabled,
             tags,
+            column_selection_macro,
         )
         # Ensure the SQL content ends with a newline
         if not sql_file_content.endswith("\n"):
@@ -376,7 +444,7 @@ def generate_yml(model_name: str, columns: List[dict]) -> str:
                     {
                         "name": column["name"],
                         "description": column["description"],
-                        "data_type": column.get("data_type", column.get("type")),
+                        "data_type": format_data_type(column.get("data_type", column.get("type"))),
                     }
                     for column in columns
                 ],
@@ -395,12 +463,16 @@ def generate_all():
             target["dir"],
             target["url"],
             target.get("exclude_columns"),
+            target.get("experimental_columns"),
             target.get("override_table_name"),
             target.get("type"),
             target.get("materialization"),
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("experimental_variable_overrides"),
+            target.get("type_overrides"),
+            target.get("column_selection_macro", False),
         )
 
 
@@ -412,12 +484,16 @@ def generate_for_key(key: str):
             target["dir"],
             target["url"],
             target.get("exclude_columns"),
+            target.get("experimental_columns"),
             target.get("override_table_name"),
             target.get("type"),
             target.get("materialization"),
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("experimental_variable_overrides"),
+            target.get("type_overrides"),
+            target.get("column_selection_macro", False),
         )
     else:
         print(f"Error: Could not find key {key} in the pages_to_process dictionary.")

@@ -48,10 +48,15 @@ pages_to_process = {
     "schemata_links": {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-datasets-schemata-links",
+        "type_overrides": {"linked_schema_catalog_number": "INT64"},
     },
     "shared_dataset_usage": {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-shared-dataset-usage",
+        "experimental_columns": ["job_principal_subject"],
+        "experimental_variable_overrides": {
+            "job_principal_subject": "principal_subject",
+        },
     },
     "schemata_replicas": {
         "dir": "datasets",
@@ -65,35 +70,44 @@ pages_to_process = {
     "jobs": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_by_project": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
         "override_table_name": "JOBS_BY_PROJECT",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_by_user": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-user",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_by_folder": {
@@ -101,12 +115,15 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-folder",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_by_organization": {
@@ -114,6 +131,7 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-organization",
+        "column_selection_macro": True,
         "exclude_columns": [
             "query",
             "query_info.resource_warning",
@@ -121,29 +139,37 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     # jobs timeline
     "jobs_timeline": {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_timeline_by_user": {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-user",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
         ],
     },
     "jobs_timeline_by_folder": {
@@ -151,27 +177,59 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-folder",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "exclude_columns": [
+            "query_info.resource_warning",
+            "query_info.query_hashes.normalized_literals",
+            "query_info.performance_insights",
+            "query_info.optimization_details",
+            "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
+        ],
     },
     "jobs_timeline_by_organization": {
         "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
         "enabled": False,
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-organization",
+        "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "exclude_columns": [
+            "query_info.resource_warning",
+            "query_info.query_hashes.normalized_literals",
+            "query_info.performance_insights",
+            "query_info.optimization_details",
+            "folder_numbers",
+            "total_services_sku_slot_ms",
+            "principal_subject",
+        ],
     },
     # recommendations and insights
     "insights": {
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-insights",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_recommendation_ids": "ARRAY<STRING>",
+        },
     },
     "recommendations": {
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_insight_ids": "ARRAY<STRING>",
+        },
     },
     "recommendations_by_organization": {
         "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
         "enabled": False,
         "dir": "recommendations_and_insights",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-recommendations-by-org",
+        "type_overrides": {
+            "target_resources": "ARRAY<STRING>",
+            "associated_insight_ids": "ARRAY<STRING>",
+        },
     },
     # reservations
     "assignments": {
@@ -196,6 +254,8 @@ pages_to_process = {
             "secondaryLocation": "secondary_location",
             "originalPrimaryLocation": "original_primary_location",
         },
+        "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservations",
     },
@@ -205,10 +265,14 @@ pages_to_process = {
             "secondaryLocation": "secondary_location",
             "originalPrimaryLocation": "original_primary_location",
         },
+        "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-changes",
     },
     "reservations_timeline": {
+        "experimental_columns": ["reservation_group_path"],
+        "type_overrides": {"reservation_group_path": "ARRAY<STRING>"},
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-reservation-timeline",
     },
@@ -216,6 +280,7 @@ pages_to_process = {
     "parameters": {
         "dir": "routines",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-parameters",
+        "type_overrides": {"ordinal_position": "INT64"},
     },
     "routines": {
         "dir": "routines",
@@ -311,6 +376,8 @@ pages_to_process = {
     "tables": {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-tables",
+        "column_selection_macro": True,
+        "experimental_columns": ["managed_table_type"],
     },
     "table_options": {
         "dir": "tables",
