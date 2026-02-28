@@ -2,6 +2,19 @@ import textwrap
 from typing import List
 
 
+def build_columns_str(columns: List[dict]) -> str:
+    column_names = [column["name"].lower() for column in columns]
+    return ",\n".join(column_names)
+
+
+def build_columns_with_empty_values(columns: List[dict]) -> str:
+    empty_columns = [
+        f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
+        for column in columns
+    ]
+    return ", ".join(empty_columns)
+
+
 def generate_sql_for_dataset(
     url: str,
     columns: List[dict],
@@ -17,15 +30,10 @@ def generate_sql_for_dataset(
     preflight_sql = "{% set dataset_list = get_dataset_list() %}"
 
     # Prepare the column names as a comma-separated string
-    column_names = [column["name"].lower() for column in columns]
-    columns_str = ",\n".join(column_names)
+    columns_str = build_columns_str(columns)
 
     # Generate a SQL for fallback in case of no datasets
-    columns_with_empty_values_arr = [
-        f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
-        for column in columns
-    ]
-    columns_with_empty_values_str = ", ".join(columns_with_empty_values_arr)
+    columns_with_empty_values_str = build_columns_with_empty_values(columns)
 
     sql = textwrap.dedent(f"""{{# More details about base table in {url} -#}}
 {required_role_str}
@@ -93,8 +101,7 @@ def generate_sql_for_table(
     tags: List[str] = None,
 ):
     # Prepare the column names as a comma-separated string
-    column_names = [column["name"].lower() for column in columns]
-    columns_str = ",\n".join(column_names)
+    columns_str = build_columns_str(columns)
 
     # Build the base query
     query = textwrap.dedent(f"""{{# More details about base table in {url} -#}}
