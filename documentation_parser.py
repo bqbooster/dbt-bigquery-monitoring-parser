@@ -193,21 +193,30 @@ def extract_partitioning_key(soup):
 def update_column_list(
     input_columns: List[dict],
     exclude_columns: List[str],
+    experimental_columns: List[str] = None,
     field_mappings: dict = None,
     experimental_variable_overrides: dict = None,
     type_overrides: dict = None,
 ):
     excluded_column_names = {column_name.lower() for column_name in (exclude_columns or [])}
+    experimental_column_names = {
+        column_name.lower() for column_name in (experimental_columns or [])
+    }
 
     # Extract all columns that are structures (as containing ".") and remove them from the columns list
     struct_columns = [column for column in input_columns if "." in column["name"]]
 
     # Remove excluded and struct columns, and copy dicts to avoid mutating input columns
-    columns = [
-        column.copy()
-        for column in input_columns
-        if column["name"].lower() not in excluded_column_names and "." not in column["name"]
-    ]
+    columns = []
+    for column in input_columns:
+        if column["name"].lower() in excluded_column_names or "." in column["name"]:
+            continue
+        copied_column = column.copy()
+        copied_column["_original_name"] = copied_column["name"]
+        copied_column["experimental"] = (
+            copied_column["name"].lower() in experimental_column_names
+        )
+        columns.append(copied_column)
 
     # Apply field mappings if provided
     if field_mappings:
@@ -235,11 +244,16 @@ def update_column_list(
             for column_name, variable_name in experimental_variable_overrides.items()
         }
         for column in columns:
-            if not column.get("is_experimental"):
+            if not column.get("experimental"):
                 continue
-            override_value = normalized_variable_overrides.get(column["name"].lower())
+            override_value = normalized_variable_overrides.get(
+                column["name"].lower()
+            ) or normalized_variable_overrides.get(column["_original_name"].lower())
             if override_value:
                 column["jinja_var"] = override_value
+
+    for column in columns:
+        column.pop("_original_name", None)
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -273,6 +287,7 @@ def generate_files(
     dir: str,
     url: str,
     exclude_columns: List[str],
+    experimental_columns: List[str],
     override_table_name: str,
     type: str,
     materialization: str = None,
@@ -332,6 +347,7 @@ def generate_files(
     columns = update_column_list(
         columns,
         exclude_columns,
+        experimental_columns,
         field_mappings,
         experimental_variable_overrides,
         type_overrides,
@@ -439,6 +455,7 @@ def generate_all():
             target["dir"],
             target["url"],
             target.get("exclude_columns"),
+            target.get("experimental_columns"),
             target.get("override_table_name"),
             target.get("type"),
             target.get("materialization"),
@@ -458,6 +475,7 @@ def generate_for_key(key: str):
             target["dir"],
             target["url"],
             target.get("exclude_columns"),
+            target.get("experimental_columns"),
             target.get("override_table_name"),
             target.get("type"),
             target.get("materialization"),

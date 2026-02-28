@@ -98,7 +98,12 @@ def test_parse_has_project_id():
 def test_update_column_list():
     # Test case: Columns with exclude_columns
     columns = [
-        {"name": "column1", "type": "STRING", "description": "Column 1"},
+        {
+            "name": "column1",
+            "type": "STRING",
+            "description": "Column 1",
+            "experimental": False,
+        },
         {"name": "column2", "type": "INTEGER", "description": "Column 2"},
         {
             "name": "column4.subcolumn1",
@@ -119,7 +124,12 @@ def test_update_column_list():
     exclude_columns = ["column2", "column3.subcolumn1"]
     result = update_column_list(columns, exclude_columns)
     expected_columns = [
-        {"name": "column1", "type": "STRING", "description": "Column 1"},
+        {
+            "name": "column1",
+            "type": "STRING",
+            "description": "Column 1",
+            "experimental": False,
+        },
         {
             "name": "column3",
             "type": "RECORD",
@@ -135,8 +145,18 @@ def test_update_column_list():
 
     # Test case: Columns without exclude_columns
     columns = [
-        {"name": "column1", "type": "STRING", "description": "Column 1"},
-        {"name": "column2", "type": "INTEGER", "description": "Column 2"},
+        {
+            "name": "column1",
+            "type": "STRING",
+            "description": "Column 1",
+            "experimental": False,
+        },
+        {
+            "name": "column2",
+            "type": "INTEGER",
+            "description": "Column 2",
+            "experimental": False,
+        },
         {
             "name": "column3.subcolumn1",
             "type": "STRING",
@@ -151,8 +171,18 @@ def test_update_column_list():
     exclude_columns = []
     result = update_column_list(columns, exclude_columns)
     expected_columns = [
-        {"name": "column1", "type": "STRING", "description": "Column 1"},
-        {"name": "column2", "type": "INTEGER", "description": "Column 2"},
+        {
+            "name": "column1",
+            "type": "STRING",
+            "description": "Column 1",
+            "experimental": False,
+        },
+        {
+            "name": "column2",
+            "type": "INTEGER",
+            "description": "Column 2",
+            "experimental": False,
+        },
         {
             "name": "column3",
             "type": "RECORD",
@@ -753,18 +783,26 @@ def test_update_column_list_with_field_mappings():
             "name": "primary_location",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
         {
             "name": "secondary_location",
             "type": "STRING",
             "description": "Secondary location",
+            "experimental": False,
         },
         {
             "name": "original_primary_location",
             "type": "STRING",
             "description": "Original primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
     assert result == expected_columns
@@ -797,8 +835,14 @@ def test_update_column_list_with_field_mappings_and_exclusions():
             "name": "primary_location",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
     assert result == expected_columns
@@ -838,8 +882,14 @@ def test_update_column_list_with_field_mappings_and_struct_columns():
             "name": "primary_location",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
         {
             "name": "struct_col",
             "type": "RECORD",
@@ -857,8 +907,14 @@ def test_update_column_list_field_mappings_none():
             "name": "primaryLocation",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
     result = update_column_list(columns, exclude_columns=[], field_mappings=None)
@@ -869,8 +925,14 @@ def test_update_column_list_field_mappings_none():
             "name": "primaryLocation",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
     assert result == expected_columns
@@ -895,8 +957,14 @@ def test_update_column_list_field_mappings_empty():
             "name": "primaryLocation",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
     assert result == expected_columns
@@ -919,8 +987,14 @@ def test_update_column_list_with_field_mappings_case_insensitive():
             "name": "primary_location",
             "type": "STRING",
             "description": "Primary location",
+            "experimental": False,
         },
-        {"name": "normalColumn", "type": "STRING", "description": "A normal column"},
+        {
+            "name": "normalColumn",
+            "type": "STRING",
+            "description": "A normal column",
+            "experimental": False,
+        },
     ]
 
 
@@ -948,6 +1022,7 @@ def test_update_column_list_does_not_mutate_input_columns():
             "name": "primary_location",
             "type": "GEOGRAPHY",
             "description": "Primary location",
+            "experimental": False,
         }
     ]
 
@@ -966,8 +1041,18 @@ def test_update_column_list_with_type_overrides_case_insensitive():
     result = update_column_list(columns, exclude_columns=[], type_overrides=type_overrides)
 
     assert result == [
-        {"name": "columnOne", "type": "BYTES", "description": "Column one"},
-        {"name": "columnTwo", "type": "NUMERIC", "description": "Column two"},
+        {
+            "name": "columnOne",
+            "type": "BYTES",
+            "description": "Column one",
+            "experimental": False,
+        },
+        {
+            "name": "columnTwo",
+            "type": "NUMERIC",
+            "description": "Column two",
+            "experimental": False,
+        },
     ]
 
 
@@ -988,6 +1073,7 @@ def test_update_column_list_with_type_overrides_after_field_mappings():
             "name": "primary_location",
             "type": "GEOGRAPHY",
             "description": "Primary location",
+            "experimental": False,
         }
     ]
 
@@ -998,7 +1084,6 @@ def test_update_column_list_sets_jinja_var_from_experimental_override():
             "name": "job_principal_subject",
             "type": "STRING",
             "description": "Principal subject",
-            "is_experimental": True,
         },
         {
             "name": "non_experimental",
@@ -1010,10 +1095,13 @@ def test_update_column_list_sets_jinja_var_from_experimental_override():
     result = update_column_list(
         columns,
         exclude_columns=[],
+        experimental_columns=["job_principal_subject"],
         experimental_variable_overrides={"job_principal_subject": "principal_subject"},
     )
 
+    assert result[0]["experimental"] is True
     assert result[0]["jinja_var"] == "principal_subject"
+    assert result[1]["experimental"] is False
     assert "jinja_var" not in result[1]
 
 
@@ -1023,17 +1111,45 @@ def test_update_column_list_experimental_override_case_insensitive():
             "name": "Job_Principal_Subject",
             "type": "STRING",
             "description": "Principal subject",
-            "is_experimental": True,
         }
     ]
 
     result = update_column_list(
         columns,
         exclude_columns=[],
+        experimental_columns=["job_principal_subject"],
         experimental_variable_overrides={"JOB_PRINCIPAL_SUBJECT": "principal_subject"},
     )
 
+    assert result[0]["experimental"] is True
     assert result[0]["jinja_var"] == "principal_subject"
+
+
+def test_update_column_list_sets_experimental_from_experimental_columns():
+    columns = [
+        {
+            "name": "Job_Principal_Subject",
+            "type": "STRING",
+            "description": "Principal subject",
+        },
+        {
+            "name": "regular_column",
+            "type": "STRING",
+            "description": "Regular",
+        },
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        experimental_columns=["job_principal_subject"],
+        experimental_variable_overrides={"JOB_PRINCIPAL_SUBJECT": "principal_subject"},
+    )
+
+    assert result[0]["experimental"] is True
+    assert result[0]["jinja_var"] == "principal_subject"
+    assert result[1]["experimental"] is False
+    assert "jinja_var" not in result[1]
 
 
 def test_generate_all_passes_type_overrides(monkeypatch):
@@ -1061,6 +1177,56 @@ def test_generate_all_passes_type_overrides(monkeypatch):
     assert captured_calls[0][-1] == {"column_name": "NUMERIC"}
 
 
+def test_generate_all_passes_experimental_columns_and_overrides(monkeypatch):
+    captured_calls = []
+
+    def fake_generate_files(
+        filename,
+        dir,
+        url,
+        exclude_columns,
+        experimental_columns,
+        override_table_name,
+        type,
+        materialization=None,
+        enabled=None,
+        tags=None,
+        field_mappings=None,
+        experimental_variable_overrides=None,
+        type_overrides=None,
+    ):
+        captured_calls.append(
+            {
+                "experimental_columns": experimental_columns,
+                "experimental_variable_overrides": experimental_variable_overrides,
+            }
+        )
+
+    monkeypatch.setattr(
+        documentation_parser,
+        "pages_to_process",
+        {
+            "test_key": {
+                "dir": "test_dir",
+                "url": "https://example.com",
+                "experimental_columns": ["job_principal_subject"],
+                "experimental_variable_overrides": {
+                    "job_principal_subject": "principal_subject"
+                },
+            }
+        },
+    )
+    monkeypatch.setattr(documentation_parser, "generate_files", fake_generate_files)
+
+    documentation_parser.generate_all()
+
+    assert len(captured_calls) == 1
+    assert captured_calls[0]["experimental_columns"] == ["job_principal_subject"]
+    assert captured_calls[0]["experimental_variable_overrides"] == {
+        "job_principal_subject": "principal_subject"
+    }
+
+
 def test_generate_for_key_passes_type_overrides(monkeypatch):
     captured_calls = []
 
@@ -1084,3 +1250,53 @@ def test_generate_for_key_passes_type_overrides(monkeypatch):
 
     assert len(captured_calls) == 1
     assert captured_calls[0][-1] == {"column_name": "BIGNUMERIC"}
+
+
+def test_generate_for_key_passes_experimental_columns_and_overrides(monkeypatch):
+    captured_calls = []
+
+    def fake_generate_files(
+        filename,
+        dir,
+        url,
+        exclude_columns,
+        experimental_columns,
+        override_table_name,
+        type,
+        materialization=None,
+        enabled=None,
+        tags=None,
+        field_mappings=None,
+        experimental_variable_overrides=None,
+        type_overrides=None,
+    ):
+        captured_calls.append(
+            {
+                "experimental_columns": experimental_columns,
+                "experimental_variable_overrides": experimental_variable_overrides,
+            }
+        )
+
+    monkeypatch.setattr(
+        documentation_parser,
+        "pages_to_process",
+        {
+            "test_key": {
+                "dir": "test_dir",
+                "url": "https://example.com",
+                "experimental_columns": ["reservation_group_path"],
+                "experimental_variable_overrides": {
+                    "reservation_group_path": "reservation_path"
+                },
+            }
+        },
+    )
+    monkeypatch.setattr(documentation_parser, "generate_files", fake_generate_files)
+
+    documentation_parser.generate_for_key("test_key")
+
+    assert len(captured_calls) == 1
+    assert captured_calls[0]["experimental_columns"] == ["reservation_group_path"]
+    assert captured_calls[0]["experimental_variable_overrides"] == {
+        "reservation_group_path": "reservation_path"
+    }
