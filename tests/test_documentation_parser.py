@@ -992,6 +992,50 @@ def test_update_column_list_with_type_overrides_after_field_mappings():
     ]
 
 
+def test_update_column_list_sets_jinja_var_from_experimental_override():
+    columns = [
+        {
+            "name": "job_principal_subject",
+            "type": "STRING",
+            "description": "Principal subject",
+            "is_experimental": True,
+        },
+        {
+            "name": "non_experimental",
+            "type": "STRING",
+            "description": "Not experimental",
+        },
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        experimental_variable_overrides={"job_principal_subject": "principal_subject"},
+    )
+
+    assert result[0]["jinja_var"] == "principal_subject"
+    assert "jinja_var" not in result[1]
+
+
+def test_update_column_list_experimental_override_case_insensitive():
+    columns = [
+        {
+            "name": "Job_Principal_Subject",
+            "type": "STRING",
+            "description": "Principal subject",
+            "is_experimental": True,
+        }
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        experimental_variable_overrides={"JOB_PRINCIPAL_SUBJECT": "principal_subject"},
+    )
+
+    assert result[0]["jinja_var"] == "principal_subject"
+
+
 def test_generate_all_passes_type_overrides(monkeypatch):
     captured_calls = []
 

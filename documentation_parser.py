@@ -194,6 +194,7 @@ def update_column_list(
     input_columns: List[dict],
     exclude_columns: List[str],
     field_mappings: dict = None,
+    experimental_variable_overrides: dict = None,
     type_overrides: dict = None,
 ):
     excluded_column_names = {column_name.lower() for column_name in (exclude_columns or [])}
@@ -227,6 +228,18 @@ def update_column_list(
         for column in columns:
             if column["name"].lower() in normalized_overrides:
                 column["type"] = normalized_overrides[column["name"].lower()]
+
+    if experimental_variable_overrides:
+        normalized_variable_overrides = {
+            column_name.lower(): variable_name
+            for column_name, variable_name in experimental_variable_overrides.items()
+        }
+        for column in columns:
+            if not column.get("is_experimental"):
+                continue
+            override_value = normalized_variable_overrides.get(column["name"].lower())
+            if override_value:
+                column["jinja_var"] = override_value
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -266,6 +279,7 @@ def generate_files(
     enabled: bool = None,
     tags: List[str] = None,
     field_mappings: dict = None,
+    experimental_variable_overrides: dict = None,
     type_overrides: dict = None,
 ):
     # Fetch the HTML content from the URL
@@ -316,7 +330,11 @@ def generate_files(
 
     # Update the column list
     columns = update_column_list(
-        columns, exclude_columns, field_mappings, type_overrides
+        columns,
+        exclude_columns,
+        field_mappings,
+        experimental_variable_overrides,
+        type_overrides,
     )
 
     model_name = f"information_schema_{filename.lower()}"
@@ -427,6 +445,7 @@ def generate_all():
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("experimental_variable_overrides"),
             target.get("type_overrides"),
         )
 
@@ -445,6 +464,7 @@ def generate_for_key(key: str):
             target.get("enabled"),
             target.get("tags"),
             target.get("field_mappings"),
+            target.get("experimental_variable_overrides"),
             target.get("type_overrides"),
         )
     else:
