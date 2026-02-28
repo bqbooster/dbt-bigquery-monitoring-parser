@@ -238,22 +238,10 @@ def update_column_list(
             if column["name"].lower() in normalized_overrides:
                 column["type"] = normalized_overrides[column["name"].lower()]
 
-    if experimental_variable_overrides:
-        normalized_variable_overrides = {
-            column_name.lower(): variable_name
-            for column_name, variable_name in experimental_variable_overrides.items()
-        }
-        for column in columns:
-            if not column.get("experimental"):
-                continue
-            override_value = normalized_variable_overrides.get(
-                column["name"].lower()
-            ) or normalized_variable_overrides.get(column["_original_name"].lower())
-            if override_value:
-                column["jinja_var"] = override_value
-
-    for column in columns:
-        column.pop("_original_name", None)
+    normalized_variable_overrides = {
+        column_name.lower(): variable_name
+        for column_name, variable_name in (experimental_variable_overrides or {}).items()
+    }
 
     # Extract the top level struct columns and deduplicate them
     struct_column_names = set(
@@ -274,10 +262,26 @@ def update_column_list(
         columns.append(
             {
                 "name": struct_column_name,
+                "_original_name": struct_column_name,
                 "type": "RECORD",
                 "description": struct_column_description.strip(),
+                "experimental": struct_column_name.lower() in experimental_column_names,
             }
         )
+
+    for column in columns:
+        if not column.get("experimental"):
+            continue
+        override_value = normalized_variable_overrides.get(column["name"].lower()) or (
+            normalized_variable_overrides.get(column["_original_name"].lower())
+            if column.get("_original_name")
+            else None
+        )
+        if override_value:
+            column["jinja_var"] = override_value
+
+    for column in columns:
+        column.pop("_original_name", None)
 
     return columns
 

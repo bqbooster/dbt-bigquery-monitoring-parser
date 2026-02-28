@@ -134,11 +134,13 @@ def test_update_column_list():
             "name": "column3",
             "type": "RECORD",
             "description": "column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3",
+            "experimental": False,
         },
         {
             "name": "column4",
             "type": "RECORD",
             "description": "column4.subcolumn1 : Subcolumn 1 of Column 4",
+            "experimental": False,
         },
     ]
     assert result == expected_columns
@@ -187,6 +189,7 @@ def test_update_column_list():
             "name": "column3",
             "type": "RECORD",
             "description": "column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3",
+            "experimental": False,
         },
     ]
     assert result == expected_columns
@@ -213,6 +216,7 @@ def test_update_column_list():
             "name": "column3",
             "type": "RECORD",
             "description": "column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3",
+            "experimental": False,
         },
     ]
     assert result == expected_columns
@@ -552,11 +556,13 @@ def test_generate_yml_with_complex_columns():
             "name": "column3",
             "type": "RECORD",
             "description": "column3.subcolumn1 : Subcolumn 1 of Column 3\ncolumn3.subcolumn2 : Subcolumn 2 of Column 3",
+            "experimental": False,
         },
         {
             "name": "column4",
             "type": "RECORD",
             "description": "column4.subcolumn1 : Subcolumn 1 of Column 4",
+            "experimental": False,
         },
     ]
     result = generate_yml("information_schema_test_table_with_complex_columns", columns)
@@ -894,10 +900,43 @@ def test_update_column_list_with_field_mappings_and_struct_columns():
             "name": "struct_col",
             "type": "RECORD",
             "description": "struct_col.sub1 : Struct subcolumn 1\nstruct_col.sub2 : Struct subcolumn 2",
+            "experimental": False,
         },
     ]
 
     assert result == expected_columns
+
+
+def test_update_column_list_struct_column_sets_experimental_and_jinja_var_override():
+    columns = [
+        {
+            "name": "struct_col.sub1",
+            "type": "STRING",
+            "description": "Struct subcolumn 1",
+        },
+        {
+            "name": "struct_col.sub2",
+            "type": "INTEGER",
+            "description": "Struct subcolumn 2",
+        },
+    ]
+
+    result = update_column_list(
+        columns,
+        exclude_columns=[],
+        experimental_columns=["struct_col"],
+        experimental_variable_overrides={"STRUCT_COL": "struct_var"},
+    )
+
+    assert result == [
+        {
+            "name": "struct_col",
+            "type": "RECORD",
+            "description": "struct_col.sub1 : Struct subcolumn 1\nstruct_col.sub2 : Struct subcolumn 2",
+            "experimental": True,
+            "jinja_var": "struct_var",
+        }
+    ]
 
 
 def test_update_column_list_field_mappings_none():
