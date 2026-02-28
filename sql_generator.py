@@ -7,6 +7,20 @@ def build_columns_str(columns: List[dict]) -> str:
     regular_column_indexes = [
         index for index, column in enumerate(columns) if not column.get("experimental")
     ]
+    if not regular_column_indexes:
+        column_names.append("{%- set has_columns = namespace(value=false) %}")
+        for column in columns:
+            column_name = column["name"].lower()
+            jinja_var_name = column.get("jinja_var", column_name)
+            jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
+            column_names.append(
+                f"{{%- if {jinja_var} %}}"
+                "{%- if has_columns.value %},{%- endif %}"
+                f"{column_name}"
+                "{%- set has_columns.value = true %}{%- endif %}"
+            )
+        return "\n".join(column_names)
+
     last_regular_column_index = (
         regular_column_indexes[-1] if regular_column_indexes else len(columns) - 1
     )
@@ -41,6 +55,22 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     regular_column_indexes = [
         index for index, column in enumerate(columns) if not column.get("experimental")
     ]
+    if not regular_column_indexes:
+        empty_columns.append("{%- set has_columns = namespace(value=false) %}")
+        for column in columns:
+            empty_column = (
+                f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
+            )
+            jinja_var_name = column.get("jinja_var", column["name"].lower())
+            jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
+            empty_columns.append(
+                f"{{%- if {jinja_var} %}}"
+                "{%- if has_columns.value %}, {%- endif %}"
+                f"{empty_column}"
+                "{%- set has_columns.value = true %}{%- endif %}"
+            )
+        return " ".join(empty_columns)
+
     last_regular_column_index = (
         regular_column_indexes[-1] if regular_column_indexes else len(columns) - 1
     )

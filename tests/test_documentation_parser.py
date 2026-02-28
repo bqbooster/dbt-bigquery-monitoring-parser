@@ -390,6 +390,57 @@ def test_build_columns_with_empty_values_keeps_valid_commas_with_middle_experime
     )
 
 
+def test_build_columns_str_all_experimental_avoids_leading_comma_when_first_disabled():
+    columns = [
+        {"name": "field1", "data_type": "STRING", "experimental": True},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+    ]
+
+    result = build_columns_str(columns)
+
+    assert (
+        result
+        == "{%- set has_columns = namespace(value=false) %}\n"
+        "{%- if dbt_bigquery_monitoring_variable_enable_field1() %}"
+        "{%- if has_columns.value %},{%- endif %}field1"
+        "{%- set has_columns.value = true %}{%- endif %}\n"
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        "{%- if has_columns.value %},{%- endif %}job_principal_subject"
+        "{%- set has_columns.value = true %}{%- endif %}"
+    )
+
+
+def test_build_columns_with_empty_values_all_experimental_avoids_leading_comma_when_first_disabled():
+    columns = [
+        {"name": "field1", "data_type": "STRING", "experimental": True},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+    ]
+
+    result = build_columns_with_empty_values(columns)
+
+    assert (
+        result
+        == "{%- set has_columns = namespace(value=false) %} "
+        "{%- if dbt_bigquery_monitoring_variable_enable_field1() %}"
+        "{%- if has_columns.value %}, {%- endif %}CAST(NULL AS STRING) AS field1"
+        "{%- set has_columns.value = true %}{%- endif %} "
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        "{%- if has_columns.value %}, {%- endif %}"
+        "CAST(NULL AS STRING) AS job_principal_subject"
+        "{%- set has_columns.value = true %}{%- endif %}"
+    )
+
+
 def test_extract_partitioning_key():
     # Test case 1: Partitioning key and clustering in paragraph format (working case)
     html_content = """
