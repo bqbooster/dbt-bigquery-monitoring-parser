@@ -308,11 +308,11 @@ def test_build_columns_str_uses_jinja_var_override_for_experimental():
 
     assert (
         result
-        == "field1,\n"
+        == "field1\n"
         "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
-        "job_principal_subject{%- endif %},\n"
+        ",job_principal_subject{%- endif %}\n"
         "{%- if dbt_bigquery_monitoring_variable_enable_reservation_group_path() %}"
-        "reservation_group_path{%- endif %}"
+        ",reservation_group_path{%- endif %}"
     )
 
 
@@ -336,11 +336,57 @@ def test_build_columns_with_empty_values_uses_jinja_var_override_for_experimenta
 
     assert (
         result
+        == "CAST(NULL AS STRING) AS field1 "
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        ", CAST(NULL AS STRING) AS job_principal_subject{%- endif %} "
+        "{%- if dbt_bigquery_monitoring_variable_enable_reservation_group_path() %}"
+        ", CAST(NULL AS STRING) AS reservation_group_path{%- endif %}"
+    )
+
+
+def test_build_columns_str_keeps_valid_commas_when_experimental_is_in_middle():
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+        {"name": "field3", "data_type": "INT64"},
+    ]
+
+    result = build_columns_str(columns)
+
+    assert (
+        result
+        == "field1,\n"
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        "job_principal_subject,{%- endif %}\n"
+        "field3"
+    )
+
+
+def test_build_columns_with_empty_values_keeps_valid_commas_with_middle_experimental():
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+        {"name": "field3", "data_type": "INT64"},
+    ]
+
+    result = build_columns_with_empty_values(columns)
+
+    assert (
+        result
         == "CAST(NULL AS STRING) AS field1, "
         "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
-        "CAST(NULL AS STRING) AS job_principal_subject{%- endif %}, "
-        "{%- if dbt_bigquery_monitoring_variable_enable_reservation_group_path() %}"
-        "CAST(NULL AS STRING) AS reservation_group_path{%- endif %}"
+        "CAST(NULL AS STRING) AS job_principal_subject, {%- endif %}"
+        " CAST(NULL AS INT64) AS field3"
     )
 
 

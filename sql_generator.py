@@ -4,36 +4,70 @@ from typing import List
 
 def build_columns_str(columns: List[dict]) -> str:
     column_names = []
-    for column in columns:
+    regular_column_indexes = [
+        index for index, column in enumerate(columns) if not column.get("experimental")
+    ]
+    last_regular_column_index = (
+        regular_column_indexes[-1] if regular_column_indexes else len(columns) - 1
+    )
+
+    for index, column in enumerate(columns):
         column_name = column["name"].lower()
         if column.get("experimental"):
             jinja_var_name = column.get("jinja_var", column_name)
             jinja_var = (
                 f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             )
-            column_names.append(
-                f"{{%- if {jinja_var} %}}{column_name}{{%- endif %}}"
+            has_regular_column_after = any(
+                not next_column.get("experimental")
+                for next_column in columns[index + 1 :]
             )
+            if has_regular_column_after:
+                column_names.append(
+                    f"{{%- if {jinja_var} %}}{column_name},{{%- endif %}}"
+                )
+            else:
+                column_names.append(
+                    f"{{%- if {jinja_var} %}},{column_name}{{%- endif %}}"
+                )
         else:
-            column_names.append(column_name)
-    return ",\n".join(column_names)
+            suffix = "," if index != last_regular_column_index else ""
+            column_names.append(f"{column_name}{suffix}")
+    return "\n".join(column_names)
 
 
 def build_columns_with_empty_values(columns: List[dict]) -> str:
     empty_columns = []
-    for column in columns:
+    regular_column_indexes = [
+        index for index, column in enumerate(columns) if not column.get("experimental")
+    ]
+    last_regular_column_index = (
+        regular_column_indexes[-1] if regular_column_indexes else len(columns) - 1
+    )
+
+    for index, column in enumerate(columns):
         empty_column = f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
         if column.get("experimental"):
             jinja_var_name = column.get("jinja_var", column["name"].lower())
             jinja_var = (
                 f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             )
-            empty_columns.append(
-                f"{{%- if {jinja_var} %}}{empty_column}{{%- endif %}}"
+            has_regular_column_after = any(
+                not next_column.get("experimental")
+                for next_column in columns[index + 1 :]
             )
+            if has_regular_column_after:
+                empty_columns.append(
+                    f"{{%- if {jinja_var} %}}{empty_column}, {{%- endif %}}"
+                )
+            else:
+                empty_columns.append(
+                    f"{{%- if {jinja_var} %}}, {empty_column}{{%- endif %}}"
+                )
         else:
-            empty_columns.append(empty_column)
-    return ", ".join(empty_columns)
+            suffix = "," if index != last_regular_column_index else ""
+            empty_columns.append(f"{empty_column}{suffix}")
+    return " ".join(empty_columns)
 
 
 def generate_sql_for_dataset(
