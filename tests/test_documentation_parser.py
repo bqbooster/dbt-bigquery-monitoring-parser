@@ -16,7 +16,11 @@ from documentation_parser import (
     extract_partitioning_key,
     generate_yml,
 )
-from sql_generator import generate_sql
+from sql_generator import (
+    build_columns_str,
+    build_columns_with_empty_values,
+    generate_sql,
+)
 
 # Get the root directory (parent of tests)
 ROOT_DIR = Path(__file__).parent.parent
@@ -282,6 +286,62 @@ def test_generate_sql_dataset():
     with open(TESTS_DIR / "test_generate_sql_dataset_expected.sql", "r") as file:
         expected = file.read()
     assert result == expected
+
+
+def test_build_columns_str_uses_jinja_var_override_for_experimental():
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+        {
+            "name": "reservation_group_path",
+            "data_type": "STRING",
+            "experimental": True,
+        },
+    ]
+
+    result = build_columns_str(columns)
+
+    assert (
+        result
+        == "field1,\n"
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        "job_principal_subject{%- endif %},\n"
+        "{%- if dbt_bigquery_monitoring_variable_enable_reservation_group_path() %}"
+        "reservation_group_path{%- endif %}"
+    )
+
+
+def test_build_columns_with_empty_values_uses_jinja_var_override_for_experimental():
+    columns = [
+        {"name": "field1", "data_type": "STRING"},
+        {
+            "name": "job_principal_subject",
+            "data_type": "STRING",
+            "experimental": True,
+            "jinja_var": "principal_subject",
+        },
+        {
+            "name": "reservation_group_path",
+            "data_type": "STRING",
+            "experimental": True,
+        },
+    ]
+
+    result = build_columns_with_empty_values(columns)
+
+    assert (
+        result
+        == "CAST(NULL AS STRING) AS field1, "
+        "{%- if dbt_bigquery_monitoring_variable_enable_principal_subject() %}"
+        "CAST(NULL AS STRING) AS job_principal_subject{%- endif %}, "
+        "{%- if dbt_bigquery_monitoring_variable_enable_reservation_group_path() %}"
+        "CAST(NULL AS STRING) AS reservation_group_path{%- endif %}"
+    )
 
 
 def test_extract_partitioning_key():

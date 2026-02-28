@@ -3,15 +3,36 @@ from typing import List
 
 
 def build_columns_str(columns: List[dict]) -> str:
-    column_names = [column["name"].lower() for column in columns]
+    column_names = []
+    for column in columns:
+        column_name = column["name"].lower()
+        if column.get("experimental"):
+            jinja_var_name = column.get("jinja_var", column_name)
+            jinja_var = (
+                f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
+            )
+            column_names.append(
+                f"{{%- if {jinja_var} %}}{column_name}{{%- endif %}}"
+            )
+        else:
+            column_names.append(column_name)
     return ",\n".join(column_names)
 
 
 def build_columns_with_empty_values(columns: List[dict]) -> str:
-    empty_columns = [
-        f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
-        for column in columns
-    ]
+    empty_columns = []
+    for column in columns:
+        empty_column = f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
+        if column.get("experimental"):
+            jinja_var_name = column.get("jinja_var", column["name"].lower())
+            jinja_var = (
+                f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
+            )
+            empty_columns.append(
+                f"{{%- if {jinja_var} %}}{empty_column}{{%- endif %}}"
+            )
+        else:
+            empty_columns.append(empty_column)
     return ", ".join(empty_columns)
 
 
