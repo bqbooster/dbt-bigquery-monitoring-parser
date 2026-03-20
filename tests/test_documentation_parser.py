@@ -288,43 +288,6 @@ def test_generate_sql_dataset():
     assert result == expected
 
 
-def test_generate_sql_table_with_column_selection_macro():
-    columns = [
-        {"name": "field1", "data_type": "STRING", "description": "Field 1"},
-        {
-            "name": "experimental_field1",
-            "data_type": "STRING",
-            "description": "Experimental field 1",
-            "experimental": True,
-        },
-        {
-            "name": "experimental_field2",
-            "data_type": "INT64",
-            "description": "Experimental field 2",
-            "experimental": True,
-        },
-        {"name": "field2", "data_type": "INTEGER", "description": "Field 2"},
-    ]
-
-    result = generate_sql(
-        "https://cloud.google.com/bigquery/docs/information-schema-jobs",
-        columns,
-        "JOBS",
-        "jobs.admin",
-        "table",
-        has_project_id_scope=False,
-        column_selection_macro=True,
-    )
-
-    expected_block = (
-        "field1,\n"
-        "{{ dbt_bigquery_monitoring_get_column_selection("
-        "dbt_bigquery_monitoring_variable_bq_region(), 'JOBS', "
-        "[ {'name': 'experimental_field1', 'type': 'STRING'}, "
-        "{'name': 'experimental_field2', 'type': 'INT64'} ]) }},\n"
-        "field2"
-    )
-    assert expected_block in result
 
 
 def test_build_columns_str_uses_jinja_var_override_for_experimental():
@@ -1449,7 +1412,7 @@ def test_generate_all_passes_type_overrides(monkeypatch):
     documentation_parser.generate_all()
 
     assert len(captured_calls) == 1
-    assert captured_calls[0][-2] == {"column_name": "NUMERIC"}
+    assert captured_calls[0][-1] == {"column_name": "NUMERIC"}
 
 
 def test_generate_all_passes_experimental_columns_and_overrides(monkeypatch):
@@ -1469,13 +1432,11 @@ def test_generate_all_passes_experimental_columns_and_overrides(monkeypatch):
         field_mappings=None,
         experimental_variable_overrides=None,
         type_overrides=None,
-        column_selection_macro=False,
     ):
         captured_calls.append(
             {
                 "experimental_columns": experimental_columns,
                 "experimental_variable_overrides": experimental_variable_overrides,
-                "column_selection_macro": column_selection_macro,
             }
         )
 
@@ -1490,7 +1451,6 @@ def test_generate_all_passes_experimental_columns_and_overrides(monkeypatch):
                 "experimental_variable_overrides": {
                     "job_principal_subject": "principal_subject"
                 },
-                "column_selection_macro": True,
             }
         },
     )
@@ -1503,7 +1463,6 @@ def test_generate_all_passes_experimental_columns_and_overrides(monkeypatch):
     assert captured_calls[0]["experimental_variable_overrides"] == {
         "job_principal_subject": "principal_subject"
     }
-    assert captured_calls[0]["column_selection_macro"] is True
 
 
 def test_generate_for_key_passes_type_overrides(monkeypatch):
@@ -1528,7 +1487,7 @@ def test_generate_for_key_passes_type_overrides(monkeypatch):
     documentation_parser.generate_for_key("test_key")
 
     assert len(captured_calls) == 1
-    assert captured_calls[0][-2] == {"column_name": "BIGNUMERIC"}
+    assert captured_calls[0][-1] == {"column_name": "BIGNUMERIC"}
 
 
 def test_generate_for_key_passes_experimental_columns_and_overrides(monkeypatch):
@@ -1548,13 +1507,11 @@ def test_generate_for_key_passes_experimental_columns_and_overrides(monkeypatch)
         field_mappings=None,
         experimental_variable_overrides=None,
         type_overrides=None,
-        column_selection_macro=False,
     ):
         captured_calls.append(
             {
                 "experimental_columns": experimental_columns,
                 "experimental_variable_overrides": experimental_variable_overrides,
-                "column_selection_macro": column_selection_macro,
             }
         )
 
@@ -1569,7 +1526,6 @@ def test_generate_for_key_passes_experimental_columns_and_overrides(monkeypatch)
                 "experimental_variable_overrides": {
                     "reservation_group_path": "reservation_path"
                 },
-                "column_selection_macro": True,
             }
         },
     )
@@ -1582,10 +1538,9 @@ def test_generate_for_key_passes_experimental_columns_and_overrides(monkeypatch)
     assert captured_calls[0]["experimental_variable_overrides"] == {
         "reservation_group_path": "reservation_path"
     }
-    assert captured_calls[0]["column_selection_macro"] is True
 
 
-def test_generate_files_passes_column_selection_macro_to_generate_sql(
+def test_generate_files_passes_experimental_to_generate_sql(
     monkeypatch, tmp_path
 ):
     captured_kwargs = {}
@@ -1610,7 +1565,6 @@ def test_generate_files_passes_column_selection_macro_to_generate_sql(
 
     def fake_generate_sql(*args):
         captured_kwargs["columns"] = args[1]
-        captured_kwargs["column_selection_macro"] = args[-1]
         return "SELECT 1"
 
     monkeypatch.chdir(tmp_path)
@@ -1625,8 +1579,6 @@ def test_generate_files_passes_column_selection_macro_to_generate_sql(
         experimental_columns=["experimental_field"],
         override_table_name=None,
         type="table",
-        column_selection_macro=True,
     )
 
-    assert captured_kwargs["column_selection_macro"] is True
     assert captured_kwargs["columns"][1]["experimental"] is True
