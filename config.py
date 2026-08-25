@@ -70,44 +70,50 @@ pages_to_process = {
     "jobs": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
-        "column_selection_macro": True,
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_by_project": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs",
         "override_table_name": "JOBS_BY_PROJECT",
-        "column_selection_macro": True,
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_by_user": {
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-user",
-        "column_selection_macro": True,
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_by_folder": {
@@ -115,15 +121,17 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-folder",
-        "column_selection_macro": True,
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_by_organization": {
@@ -131,7 +139,11 @@ pages_to_process = {
         "enabled": False,
         "dir": "jobs",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-by-organization",
-        "column_selection_macro": True,
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query",
             "query_info.resource_warning",
@@ -139,8 +151,6 @@ pages_to_process = {
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     # jobs timeline
@@ -148,28 +158,34 @@ pages_to_process = {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline",
         "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_timeline_by_user": {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-user",
         "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_timeline_by_folder": {
@@ -178,14 +194,17 @@ pages_to_process = {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-folder",
         "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     "jobs_timeline_by_organization": {
@@ -194,14 +213,17 @@ pages_to_process = {
         "dir": "jobs_timeline",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-jobs-timeline-by-organization",
         "type_overrides": {"period_shuffle_ram_usage_ratio": "FLOAT64"},
+        "experimental_columns": [
+            "total_services_sku_slot_ms",
+            "principal_subject",
+            "materialized_view_statistics"
+        ],
         "exclude_columns": [
             "query_info.resource_warning",
             "query_info.query_hashes.normalized_literals",
             "query_info.performance_insights",
             "query_info.optimization_details",
             "folder_numbers",
-            "total_services_sku_slot_ms",
-            "principal_subject",
         ],
     },
     # recommendations and insights
@@ -376,8 +398,6 @@ pages_to_process = {
     "tables": {
         "dir": "tables",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-tables",
-        "column_selection_macro": True,
-        "experimental_columns": ["managed_table_type"],
     },
     "table_options": {
         "dir": "tables",
