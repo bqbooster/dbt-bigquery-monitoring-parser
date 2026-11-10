@@ -23,10 +23,14 @@ pages_to_process = {
     "organization_options": {
         "dir": "configuration",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-organization-options",
+        "enabled": False,
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
     },
     "organization_options_changes": {
         "dir": "configuration",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-organization-options-changes",
+        "enabled": False,
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
     },
     "project_options": {
         "dir": "configuration",
@@ -66,6 +70,11 @@ pages_to_process = {
         "dir": "datasets",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-schemata-replicas-by-failover-reservation",
     },
+    # Graphs
+    "property_graphs": {
+        "dir": "graphs",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-property-graphs",
+    },
     # Jobs
     "jobs": {
         "dir": "jobs",
@@ -73,7 +82,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -90,7 +100,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -106,7 +117,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -124,7 +136,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -142,7 +155,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query",
@@ -161,7 +175,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -178,7 +193,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -197,7 +213,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -216,7 +233,8 @@ pages_to_process = {
         "experimental_columns": [
             "total_services_sku_slot_ms",
             "principal_subject",
-            "materialized_view_statistics"
+            "materialized_view_statistics",
+            "reservation_group_path",
         ],
         "exclude_columns": [
             "query_info.resource_warning",
@@ -269,6 +287,10 @@ pages_to_process = {
     "capacity_commitment_changes": {
         "dir": "reservations",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-capacity-commitment-changes",
+    },
+    "failover_history": {
+        "dir": "reservations",
+        "url": "https://cloud.google.com/bigquery/docs/information-schema-failover-history",
     },
     "reservations": {
         "field_mappings": {

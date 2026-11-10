@@ -50,6 +50,27 @@ def build_columns_str(columns: List[dict]) -> str:
     return "\n".join(column_names)
 
 
+def sql_type_for_null_cast(data_type: str) -> str:
+    """Return a GoogleSQL type that is valid in CAST(NULL AS ...).
+
+    Docs use STRUCT and RECORD for nested values. A bare STRUCT or RECORD is not a
+    complete type literal, so the empty-dataset fallback would fail to parse.
+    """
+    normalized = " ".join(data_type.split())
+    replacements = {
+        "STRUCT": "STRUCT<>",
+        "RECORD": "STRUCT<>",
+        "ARRAY<STRUCT>": "ARRAY<STRUCT<>>",
+        "ARRAY<RECORD>": "ARRAY<STRUCT<>>",
+    }
+    return replacements.get(normalized, data_type)
+
+
+def _null_cast(column: dict) -> str:
+    sql_type = sql_type_for_null_cast(column["data_type"])
+    return f"CAST(NULL AS {sql_type}) AS {column['name'].lower()}"
+
+
 def build_columns_with_empty_values(columns: List[dict]) -> str:
     empty_columns = []
     regular_column_indexes = [
@@ -58,9 +79,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     if not regular_column_indexes:
         empty_columns.append("{%- set has_columns = namespace(value=false) %}")
         for column in columns:
-            empty_column = (
-                f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
-            )
+            empty_column = _null_cast(column)
             jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             empty_columns.append(
@@ -76,7 +95,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     )
 
     for index, column in enumerate(columns):
-        empty_column = f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
+        empty_column = _null_cast(column)
         if column.get("experimental"):
             jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = (
@@ -195,34 +214,28 @@ SELECT
 {columns_str}
 FROM `region-{{{{ dbt_bigquery_monitoring_variable_bq_region() }}}}`.`INFORMATION_SCHEMA`.`{table_name}`""")
 
-    # Add config block if we have project scoping, custom materialization, enabled, or tags
-    if has_project_id_scope or materialization or enabled is not None or tags:
-        # Use custom materialization if provided, otherwise use default for project-scoped tables
-        if materialization:
-            config_block = f"{{{{ config(materialized='{materialization}'"
-        else:
-            config_block = (
-                "{{ config(materialized=dbt_bigquery_monitoring_materialization()"
-            )
+    # Always set materialization. Without config(), dbt materializes a view, which
+    # fails when the package runs these models in project mode.
+    if materialization:
+        config_block = f"{{{{ config(materialized='{materialization}'"
+    else:
+        config_block = (
+            "{{ config(materialized=dbt_bigquery_monitoring_materialization()"
+        )
 
-        # Add enabled parameter
-        if enabled is not None:
-            config_block += f", enabled={'true' if enabled else 'false'}"
+    if enabled is not None:
+        config_block += f", enabled={'true' if enabled else 'false'}"
 
-        # Add tags parameter
-        if tags:
-            tags_str = '["' + '", "'.join(tags) + '"]'
-            config_block += f", tags={tags_str}"
+    if tags:
+        tags_str = '["' + '", "'.join(tags) + '"]'
+        config_block += f", tags={tags_str}"
 
-        # Add partitioning configuration
-        if partitioning_key:
-            config_block += f", partition_by={{'field': '{partitioning_key}', 'data_type': 'timestamp', 'granularity': 'hour'}}, partition_expiration_days=180"
-        config_block += ") }}"
+    if partitioning_key:
+        config_block += f", partition_by={{'field': '{partitioning_key}', 'data_type': 'timestamp', 'granularity': 'hour'}}, partition_expiration_days=180"
+    config_block += ") }}"
 
-        query = f"""{config_block}
+    return f"""{config_block}
 {query}"""
-
-    return query
 
 
 def generate_sql(

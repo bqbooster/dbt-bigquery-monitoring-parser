@@ -20,7 +20,9 @@ from sql_generator import (
     build_columns_str,
     build_columns_with_empty_values,
     generate_sql,
+    sql_type_for_null_cast,
 )
+from config import pages_to_process
 
 # Get the root directory (parent of tests)
 ROOT_DIR = Path(__file__).parent.parent
@@ -60,6 +62,31 @@ def test_parse_required_role():
     assert parse_required_role(soup) is None
 
 
+def test_parse_required_role_accepts_plural_and_singular_headings():
+    html_content = """
+    <h2 data-text="Required roles">Required roles</h2>
+    <p>BigQuery Resource Viewer (roles/bigquery.resourceViewer) on the project.</p>
+    <div>
+      <h2 data-text="Schema">Schema</h2>
+      <p>column table</p>
+    </div>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    result = parse_required_role(soup)
+    assert "roles/bigquery.resourceViewer" in result
+    assert "Schema" not in result
+    assert "column table" not in result
+
+    html_content = """
+    <h2 data-text="Required permission">Required permission</h2>
+    <p>bigquery.reservations.list on the project.</p>
+    <h2 data-text="Schema">Schema</h2>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    result = parse_required_role(soup)
+    assert result.strip() == "bigquery.reservations.list on the project."
+
+
 def test_parse_table_name():
     # Test case: Table name is present
     with open(ROOT_DIR / "html_content.html", "r") as file:
@@ -78,6 +105,20 @@ def test_parse_table_name():
     soup = BeautifulSoup(html_content, "html.parser")
     result = parse_table_name(soup)
     assert result is None
+
+
+def test_parse_table_name_prefers_page_heading_over_optional_suffix():
+    # Scope tables write RECOMMENDATIONS[_BY_ORGANIZATION]. The last code cell
+    # only matches the short name, but the page title is the view to query.
+    html_content = """
+    <h1 data-text="INFORMATION_SCHEMA.RECOMMENDATIONS_BY_ORGANIZATION view">
+      INFORMATION_SCHEMA.RECOMMENDATIONS_BY_ORGANIZATION view
+    </h1>
+    <td><code>INFORMATION_SCHEMA.RECOMMENDATIONS_BY_ORGANIZATION</code></td>
+    <td><code>INFORMATION_SCHEMA.RECOMMENDATIONS[_BY_ORGANIZATION]</code></td>
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    assert parse_table_name(soup) == "RECOMMENDATIONS_BY_ORGANIZATION"
 
 
 def test_parse_has_project_id():
@@ -288,6 +329,62 @@ def test_generate_sql_dataset():
     assert result == expected
 
 
+
+
+def test_sql_type_for_null_cast_expands_bare_struct_types():
+    assert sql_type_for_null_cast("STRUCT") == "STRUCT<>"
+    assert sql_type_for_null_cast("RECORD") == "STRUCT<>"
+    assert sql_type_for_null_cast("ARRAY<STRUCT>") == "ARRAY<STRUCT<>>"
+    assert sql_type_for_null_cast("ARRAY<RECORD>") == "ARRAY<STRUCT<>>"
+    assert sql_type_for_null_cast("ARRAY<STRING>") == "ARRAY<STRING>"
+    assert sql_type_for_null_cast("INT64") == "INT64"
+
+
+def test_build_columns_with_empty_values_casts_bare_struct_as_empty_struct():
+    columns = [
+        {"name": "analyzer", "data_type": "STRING"},
+        {"name": "last_index_alteration_info", "data_type": "STRUCT"},
+    ]
+
+    result = build_columns_with_empty_values(columns)
+
+    assert (
+        "CAST(NULL AS STRING) AS analyzer, "
+        "CAST(NULL AS STRUCT<>) AS last_index_alteration_info"
+    ) in result
+
+
+def test_organization_configuration_views_are_disabled_with_org_tag():
+    for key in ("organization_options", "organization_options_changes"):
+        page = pages_to_process[key]
+        assert page["dir"] == "configuration"
+        assert page["enabled"] is False
+        assert page["tags"] == [
+            "dbt-bigquery-monitoring-information-schema-by-organization"
+        ]
+
+
+def test_configured_views_include_property_graphs_and_failover_history():
+    assert pages_to_process["property_graphs"]["dir"] == "graphs"
+    assert pages_to_process["property_graphs"]["url"].endswith(
+        "information-schema-property-graphs"
+    )
+    assert pages_to_process["failover_history"]["dir"] == "reservations"
+    assert pages_to_process["failover_history"]["url"].endswith(
+        "information-schema-failover-history"
+    )
+    for key in (
+        "jobs",
+        "jobs_by_project",
+        "jobs_by_user",
+        "jobs_by_folder",
+        "jobs_by_organization",
+        "jobs_timeline",
+        "jobs_timeline_by_user",
+        "jobs_timeline_by_folder",
+        "jobs_timeline_by_organization",
+    ):
+        assert "reservation_group_path" in pages_to_process[key]["experimental_columns"]
 
 
 def test_build_columns_str_uses_jinja_var_override_for_experimental():

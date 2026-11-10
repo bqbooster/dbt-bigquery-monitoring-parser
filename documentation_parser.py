@@ -16,7 +16,26 @@ def format_data_type(raw_type: str) -> str:
     return raw_type
 
 
+_VIEW_NAME_IN_HEADING = re.compile(
+    r"^(?:INFORMATION_SCHEMA\.)?([A-Z][A-Z0-9_]+)\s+view\b",
+    re.IGNORECASE,
+)
+
+
+def _heading_text(tag) -> str:
+    raw = tag.get("data-text") or tag.get_text(" ", strip=True)
+    return " ".join(raw.split())
+
+
 def parse_table_name(soup):
+    # The page title is the view this document describes. Scope tables often
+    # write optional suffixes as NAME[_BY_ORGANIZATION], and a last-cell scan
+    # then keeps only the short name.
+    for heading in soup.find_all("h1"):
+        match = _VIEW_NAME_IN_HEADING.match(_heading_text(heading))
+        if match:
+            return match.group(1).upper()
+
     table_name = None
     for td_tag in soup.find_all("td"):
         # Extract the text within the <code> tag
@@ -48,13 +67,18 @@ def parse_has_project_id_scope(soup):
     return has_project_id
 
 
+_REQUIRED_ACCESS_HEADINGS = {
+    "required role",
+    "required roles",
+    "required permission",
+    "required permissions",
+}
+
+
 def parse_required_role(soup):
     required_role = None
     for h2_tag in soup.find_all("h2"):
-        if (
-            h2_tag.get("data-text") == "Required permissions"
-            or h2_tag.get("data-text") == "Required role"
-        ):
+        if _heading_text(h2_tag).lower() in _REQUIRED_ACCESS_HEADINGS:
             required_role = ""
             next_element = h2_tag.find_next_sibling()
             while (
