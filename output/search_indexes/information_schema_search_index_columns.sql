@@ -1,0 +1,46 @@
+{{ config(materialized=dbt_bigquery_monitoring_materialization()) }}
+{# More details about base table in https://cloud.google.com/bigquery/docs/information-schema-index-columns -#}
+{# Required role/permissions: To see search index metadata, you need the
+bigquery.tables.get or bigquery.tables.list Identity and Access Management (IAM)
+permission on the table with the index. Each of the following predefined
+IAM roles includes at least one of these permissions:
+roles/bigquery.admin
+roles/bigquery.dataEditor
+roles/bigquery.dataOwner
+roles/bigquery.dataViewer
+roles/bigquery.metadataViewer
+roles/bigquery.user
+For more information about BigQuery permissions, see
+Access control with IAM. -#}
+
+
+{% set dataset_list = get_dataset_list() %}
+
+WITH base AS (
+{%- if dataset_list | length == 0 -%}
+  SELECT CAST(NULL AS STRING) AS index_catalog, CAST(NULL AS STRING) AS index_schema, CAST(NULL AS STRING) AS table_name, CAST(NULL AS STRING) AS index_name, CAST(NULL AS STRING) AS index_column_name, CAST(NULL AS STRING) AS index_field_path
+  LIMIT 0
+{%- else %}
+{% for dataset in dataset_list -%}
+  SELECT
+  index_catalog,
+index_schema,
+table_name,
+index_name,
+index_column_name,
+index_field_path
+  FROM {{ dataset | trim }}.`INFORMATION_SCHEMA`.`SEARCH_INDEX_COLUMNS`
+{% if not loop.last %}UNION ALL{% endif %}
+{% endfor %}
+{%- endif -%}
+)
+
+SELECT
+index_catalog,
+index_schema,
+table_name,
+index_name,
+index_column_name,
+index_field_path
+FROM
+base

@@ -50,6 +50,27 @@ def build_columns_str(columns: List[dict]) -> str:
     return "\n".join(column_names)
 
 
+def sql_type_for_null_cast(data_type: str) -> str:
+    """Return a GoogleSQL type that is valid in CAST(NULL AS ...).
+
+    Docs use STRUCT and RECORD for nested values. A bare STRUCT or RECORD is not a
+    complete type literal, so the empty-dataset fallback would fail to parse.
+    """
+    normalized = " ".join(data_type.split())
+    replacements = {
+        "STRUCT": "STRUCT<>",
+        "RECORD": "STRUCT<>",
+        "ARRAY<STRUCT>": "ARRAY<STRUCT<>>",
+        "ARRAY<RECORD>": "ARRAY<STRUCT<>>",
+    }
+    return replacements.get(normalized, data_type)
+
+
+def _null_cast(column: dict) -> str:
+    sql_type = sql_type_for_null_cast(column["data_type"])
+    return f"CAST(NULL AS {sql_type}) AS {column['name'].lower()}"
+
+
 def build_columns_with_empty_values(columns: List[dict]) -> str:
     empty_columns = []
     regular_column_indexes = [
@@ -58,9 +79,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     if not regular_column_indexes:
         empty_columns.append("{%- set has_columns = namespace(value=false) %}")
         for column in columns:
-            empty_column = (
-                f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
-            )
+            empty_column = _null_cast(column)
             jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = f"dbt_bigquery_monitoring_variable_enable_{jinja_var_name}()"
             empty_columns.append(
@@ -76,7 +95,7 @@ def build_columns_with_empty_values(columns: List[dict]) -> str:
     )
 
     for index, column in enumerate(columns):
-        empty_column = f"CAST(NULL AS {column['data_type']}) AS {column['name'].lower()}"
+        empty_column = _null_cast(column)
         if column.get("experimental"):
             jinja_var_name = column.get("jinja_var") or column["name"].lower()
             jinja_var = (
