@@ -23,10 +23,14 @@ pages_to_process = {
     "organization_options": {
         "dir": "configuration",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-organization-options",
+        "enabled": False,
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
     },
     "organization_options_changes": {
         "dir": "configuration",
         "url": "https://cloud.google.com/bigquery/docs/information-schema-organization-options-changes",
+        "enabled": False,
+        "tags": ["dbt-bigquery-monitoring-information-schema-by-organization"],
     },
     "project_options": {
         "dir": "configuration",

@@ -354,6 +354,16 @@ def test_build_columns_with_empty_values_casts_bare_struct_as_empty_struct():
     ) in result
 
 
+def test_organization_configuration_views_are_disabled_with_org_tag():
+    for key in ("organization_options", "organization_options_changes"):
+        page = pages_to_process[key]
+        assert page["dir"] == "configuration"
+        assert page["enabled"] is False
+        assert page["tags"] == [
+            "dbt-bigquery-monitoring-information-schema-by-organization"
+        ]
+
+
 def test_configured_views_include_property_graphs_and_failover_history():
     assert pages_to_process["property_graphs"]["dir"] == "graphs"
     assert pages_to_process["property_graphs"]["url"].endswith(
